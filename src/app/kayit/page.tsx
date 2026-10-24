@@ -8,6 +8,7 @@ import {
   MapPin, FileCheck, Loader2, AlertCircle 
 } from "lucide-react";
 import { UNIVERSITIES, DEPARTMENTS } from "@/data/constants";
+import Footer from "@/components/Footer";
 
 const COMMON_LANGUAGES = [
   "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", 
@@ -315,8 +316,8 @@ export default function KayitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF9F6] pt-32 flex flex-col justify-between">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 w-full">
         
         <div className="text-center mb-12">
           <motion.h1 
@@ -907,6 +908,8 @@ export default function KayitPage() {
           </form>
         </motion.div>
       </div>
+
+      <Footer />
     </div>
   );
 }

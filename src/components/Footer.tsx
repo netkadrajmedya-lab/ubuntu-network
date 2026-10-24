@@ -8,7 +8,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-[#0D0D0D] text-white py-16 border-t border-white/10 relative overflow-hidden">
+    <footer className="w-full bg-[#0D0D0D] text-white py-16 border-t border-white/10 relative overflow-hidden">
       {/* Hafif Arka Plan Parıltısı */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-[#2E5A27]/10 blur-[100px] pointer-events-none" />
 
