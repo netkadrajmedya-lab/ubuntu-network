@@ -25,6 +25,9 @@ export interface StudentRecord {
   status: "Bekliyor" | "Onaylandı" | "Reddedildi";
   rating: number;
   createdAt: string;
+  studentUsername?: string;
+  studentPassword?: string;
+  welcomeEmailSentAt?: string;
 }
 
 export interface QuoteRecord {
@@ -43,7 +46,7 @@ export interface QuoteRecord {
 export interface AdminUserRecord {
   id: string;
   username: string;
-  passwordHash: string; // Plain/SHA for lightweight embedded store
+  passwordHash: string;
   fullName: string;
   email: string;
   role: "super_admin" | "operator" | "moderator";
@@ -68,7 +71,7 @@ const DEFAULT_ADMIN: AdminUserRecord = {
   username: "admin",
   passwordHash: "ubuntu2026",
   fullName: "Sistem Yöneticisi",
-  email: "admin@ubuntunetwork.com",
+  email: "admin@ubuntunetwork.com.tr",
   role: "super_admin",
   permissions: {
     canApproveStudents: true,
@@ -120,6 +123,18 @@ export async function saveStudents(students: StudentRecord[]): Promise<void> {
   await fs.writeFile(STUDENTS_FILE, JSON.stringify(students, null, 2), "utf-8");
 }
 
+function slugify(text: string): string {
+  const trMap: { [key: string]: string } = {
+    ç: "c", Ç: "c", ğ: "g", Ğ: "g", ı: "i", İ: "i", ö: "o", Ö: "o", ş: "s", Ş: "s", ü: "u", Ü: "u"
+  };
+  return text
+    .split("")
+    .map(c => trMap[c] || c)
+    .join("")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export async function createStudent(student: Omit<StudentRecord, "id" | "createdAt" | "status" | "rating" | "fullName">): Promise<StudentRecord> {
   const students = await getStudents();
   const id = `std_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -149,6 +164,75 @@ export async function updateStudent(id: string, updates: Partial<StudentRecord>)
   return students[index];
 }
 
+export async function approveStudentWithCredentials(id: string): Promise<{ student: StudentRecord; generatedCredentials: { username: string; password: string; emailText: string } } | null> {
+  const students = await getStudents();
+  const index = students.findIndex((s) => s.id === id);
+  if (index === -1) return null;
+
+  const current = students[index];
+  
+  // Kullanıcı adı oluştur (örn: elif.yilmaz veya ali.demir24)
+  const cleanName = slugify(current.name || "ogrenci");
+  const cleanSurname = slugify(current.surname || "aday");
+  const randSuffix = Math.floor(100 + Math.random() * 900);
+  const username = current.studentUsername || `${cleanName}.${cleanSurname}${randSuffix}`;
+  
+  // Güvenli rastgele şifre oluştur (örn: Ubn#4921)
+  const password = current.studentPassword || `Ubn#${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const welcomeEmailText = `
+Sayın ${current.fullName},
+
+Tebrik ederiz! Ubuntu Network yetenek ağına yapmış olduğunuz başvurunuz incelenmiş olup platformumuza kabul edilmiş bulunmaktasınız.
+
+Profiliniz artık "Ubuntu Network Premium Vitrin" üzerinde kurumsal işverenlere ve prestijli projelere sergilenmektedir.
+
+Size özel oluşturulan Öğrenci Paneli giriş bilgileriniz:
+--------------------------------------------------
+🔗 Giriş Adresi: https://www.ubuntunetwork.com.tr/giris
+👤 Kullanıcı Adı: ${username} (veya kayıtlı e-postanız)
+🔑 Geçici Parola: ${password}
+--------------------------------------------------
+
+Giriş yaptıktan sonra "Hesap Ayarları" bölümünden parolanızı değiştirebilir, gelen proje eşleştirmelerinizi ve anlaşmalarınızı takip edebilirsiniz.
+
+Ubuntu Network Ailesine Hoş Geldiniz!
+https://www.ubuntunetwork.com.tr
+`.trim();
+
+  students[index] = {
+    ...current,
+    status: "Onaylandı",
+    studentUsername: username,
+    studentPassword: password,
+    welcomeEmailSentAt: new Date().toISOString(),
+  };
+
+  await saveStudents(students);
+
+  return {
+    student: students[index],
+    generatedCredentials: {
+      username,
+      password,
+      emailText: welcomeEmailText,
+    },
+  };
+}
+
+export async function findStudentByAuth(usernameOrEmail: string, password: string): Promise<StudentRecord | null> {
+  const students = await getStudents();
+  const cleanQuery = usernameOrEmail.trim().toLowerCase();
+  
+  const student = students.find((s) => {
+    const matchUsername = (s.studentUsername || "").toLowerCase() === cleanQuery;
+    const matchEmail = (s.email || "").toLowerCase() === cleanQuery;
+    return (matchUsername || matchEmail) && s.studentPassword === password;
+  });
+
+  return student || null;
+}
+
 export async function deleteStudent(id: string): Promise<boolean> {
   const students = await getStudents();
   const filtered = students.filter((s) => s.id !== id);
@@ -172,6 +256,13 @@ export async function getQuotes(): Promise<QuoteRecord[]> {
 export async function saveQuotes(quotes: QuoteRecord[]): Promise<void> {
   await ensureStorage();
   await fs.writeFile(QUOTES_FILE, JSON.stringify(quotes, null, 2), "utf-8");
+}
+
+export async function getStudentDeals(studentId: string, studentName?: string): Promise<QuoteRecord[]> {
+  const quotes = await getQuotes();
+  return quotes.filter(
+    (q) => q.studentId === studentId || (studentName && q.studentName.toLowerCase().includes(studentName.toLowerCase()))
+  );
 }
 
 export async function createQuote(quote: Omit<QuoteRecord, "id" | "createdAt" | "status">): Promise<QuoteRecord> {
@@ -237,7 +328,6 @@ export async function findAdminByCredentials(username: string, password: string)
   );
   if (!user || user.status === "inactive") return null;
 
-  // Update lastLogin
   user.lastLogin = new Date().toISOString();
   await saveAdminUsers(admins);
   return user;
@@ -275,7 +365,6 @@ export async function updateAdminUser(id: string, updates: Partial<AdminUserReco
 
 export async function deleteAdminUser(id: string): Promise<boolean> {
   const admins = await getAdminUsers();
-  // Prevent deleting the primary super admin if it's the only one
   if (admins.length <= 1) {
     throw new Error("Sistemdeki tek yönetici silinemez.");
   }

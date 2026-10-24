@@ -6,7 +6,8 @@ import {
   Users, Briefcase, Search, ShieldCheck, LogOut, Eye, Check, X, 
   Building2, Phone, Mail, Trash2, ExternalLink, Lock, Loader2, 
   Sparkles, AlertCircle, RefreshCw, GraduationCap, MapPin, Globe, 
-  KeyRound, UserPlus, ShieldAlert, CheckCircle2, Sliders, Edit3 
+  KeyRound, UserPlus, ShieldAlert, CheckCircle2, Sliders, Edit3,
+  Copy, Send
 } from "lucide-react";
 
 interface CurrentAdmin {
@@ -48,8 +49,24 @@ interface Student {
   photo?: string;
   edevletDocName?: string;
   status: "Bekliyor" | "Onaylandı" | "Reddedildi";
+  studentUsername?: string;
+  studentPassword?: string;
+  welcomeEmailSentAt?: string;
   rating: number;
   createdAt: string;
+}
+
+interface ApprovalModalData {
+  student: Student;
+  credentials: {
+    username: string;
+    password: string;
+    emailContent: {
+      to: string;
+      subject: string;
+      body: string;
+    };
+  };
 }
 
 interface Quote {
@@ -103,6 +120,16 @@ export default function AdminDashboard() {
   const [newPwdConfirm, setNewPwdConfirm] = useState("");
   const [pwdMsg, setPwdMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pwdLoading, setPwdLoading] = useState(false);
+
+  // Öğrenci Onay ve Giriş Bilgileri Modalı
+  const [approvalModalData, setApprovalModalData] = useState<ApprovalModalData | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2500);
+  };
 
   // Oturum Kontrolü
   useEffect(() => {
@@ -189,9 +216,16 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setStudents(students.map(s => s.id === id ? { ...s, status } : s));
+        const updated = data.student || { status };
+        setStudents(students.map(s => s.id === id ? { ...s, ...updated } : s));
         if (selectedStudent?.id === id) {
-          setSelectedStudent({ ...selectedStudent, status });
+          setSelectedStudent({ ...selectedStudent, ...updated });
+        }
+        if (status === "Onaylandı" && data.generatedCredentials) {
+          setApprovalModalData({
+            student: data.student,
+            credentials: data.generatedCredentials,
+          });
         }
       }
     } catch (err) {
@@ -1495,6 +1529,28 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
+
+                {selectedStudent.studentUsername && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <KeyRound className="w-4 h-4 text-[#2E5A27]" /> Öğrenci Portalı Giriş Bilgileri
+                    </h4>
+                    <div className="bg-emerald-50/60 border border-emerald-200/80 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-500">Kullanıcı Adı</span>
+                        <div className="font-mono font-bold text-gray-900 text-sm mt-0.5">
+                          {selectedStudent.studentUsername}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-500">Parola Durumu</span>
+                        <div className="font-mono font-bold text-gray-900 text-sm mt-0.5">
+                          {selectedStudent.studentPassword ? selectedStudent.studentPassword : "•••••••• (Öğrenci Tarafından Değiştirildi)"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Aksiyon Butonları */}
@@ -1525,6 +1581,139 @@ export default function AdminDashboard() {
                     )}
                   </>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ÖĞRENCİ ONAYLANDI & GİRİŞ BİLGİLERİ MODALI */}
+      <AnimatePresence>
+        {approvalModalData && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl relative p-6 sm:p-8 border border-emerald-100"
+            >
+              <button 
+                onClick={() => setApprovalModalData(null)} 
+                className="absolute top-5 right-5 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-[#1A1A1A]">Öğrenci Onaylandı!</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    Öğrenci vitrine çıkarıldı ve öğrenci paneli giriş hesabı oluşturuldu.
+                  </p>
+                </div>
+              </div>
+
+              {/* Aday Bilgisi & Bilgiler */}
+              <div className="bg-[#1A1A1A] text-white p-5 rounded-2xl mb-5 space-y-4 shadow-inner">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Aday</span>
+                    <p className="font-bold text-white text-base">
+                      {approvalModalData.student.fullName || approvalModalData.student.name}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+                    ✓ Aktif Öğrenci Hesabı
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Kullanıcı Adı</span>
+                      <p className="font-mono font-bold text-[#D97725] text-sm sm:text-base">
+                        {approvalModalData.credentials.username}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(approvalModalData.credentials.username, "uname")}
+                      className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                      title="Kopyala"
+                    >
+                      {copiedField === "uname" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Geçici Şifre</span>
+                      <p className="font-mono font-bold text-emerald-400 text-sm sm:text-base">
+                        {approvalModalData.credentials.password}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(approvalModalData.credentials.password, "pwd")}
+                      className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                      title="Kopyala"
+                    >
+                      {copiedField === "pwd" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-400 flex items-center justify-between pt-1">
+                  <span>Öğrenci Giriş Linki: <strong className="text-gray-200">/giris</strong></span>
+                  <button
+                    onClick={() => copyToClipboard(`Kullanıcı Adı: ${approvalModalData.credentials.username}\nŞifre: ${approvalModalData.credentials.password}\nGiriş: https://www.ubuntunetwork.com.tr/giris`, "both")}
+                    className="text-xs font-bold text-[#D97725] hover:underline flex items-center gap-1"
+                  >
+                    {copiedField === "both" ? "Kopyalandı!" : "Tüm Giriş Bilgilerini Kopyala"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Kurumsal E-Posta Önizlemesi */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
+                    Öğrenciye Hazırlanan Kurumsal E-Posta
+                  </h4>
+                  <span className="text-[11px] text-gray-400">{approvalModalData.credentials.emailContent.to}</span>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 p-4 rounded-2xl text-xs font-mono text-gray-800 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto">
+                  {approvalModalData.credentials.emailContent.body}
+                </div>
+              </div>
+
+              {/* Aksiyon Butonları */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(approvalModalData.credentials.emailContent.body, "mailbody")}
+                  className="flex-1 py-3 px-4 bg-[#2E5A27] text-white rounded-xl font-bold text-sm hover:bg-[#386d30] shadow flex items-center justify-center gap-2 transition-all"
+                >
+                  <Copy className="w-4 h-4" />
+                  {copiedField === "mailbody" ? "E-Posta Metni Kopyalandı!" : "E-Posta Metnini Kopyala"}
+                </button>
+
+                <a
+                  href={`mailto:${approvalModalData.credentials.emailContent.to}?subject=${encodeURIComponent(approvalModalData.credentials.emailContent.subject)}&body=${encodeURIComponent(approvalModalData.credentials.emailContent.body)}`}
+                  className="flex-1 py-3 px-4 bg-[#D97725] text-white rounded-xl font-bold text-sm hover:bg-[#c36a21] shadow flex items-center justify-center gap-2 transition-all"
+                >
+                  <Send className="w-4 h-4" /> E-Posta Olarak Gönder
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setApprovalModalData(null)}
+                  className="py-3 px-5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold text-sm transition-colors"
+                >
+                  Kapat
+                </button>
               </div>
             </motion.div>
           </motion.div>

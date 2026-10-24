@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateStudent, deleteStudent } from "@/lib/db";
+import { updateStudent, deleteStudent, approveStudentWithCredentials } from "@/lib/db";
 
 export async function PATCH(
   request: Request,
@@ -8,6 +8,18 @@ export async function PATCH(
   try {
     const { id } = await params;
     const updates = await request.json();
+
+    if (updates.status === "Onaylandı") {
+      const result = await approveStudentWithCredentials(id);
+      if (!result) {
+        return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
+      }
+      return NextResponse.json({
+        success: true,
+        student: result.student,
+        generatedCredentials: result.generatedCredentials,
+      });
+    }
 
     const updated = await updateStudent(id, updates);
     if (!updated) {
