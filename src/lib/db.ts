@@ -224,9 +224,32 @@ export async function createStudent(student: Omit<StudentRecord, "id" | "created
   return newStudent;
 }
 
-export async function updateStudent(id: string, updates: Partial<StudentRecord>): Promise<StudentRecord | null> {
+export async function updateStudent(
+  id: string, 
+  updates: Partial<StudentRecord>, 
+  fallbackStudent?: StudentRecord
+): Promise<StudentRecord | null> {
   const students = await getStudents();
-  const index = students.findIndex((s) => s.id === id);
+  const cleanId = decodeURIComponent(String(id || "")).trim();
+  
+  let index = students.findIndex((s) => String(s.id).trim() === cleanId || s.id === id);
+
+  if (index === -1 && fallbackStudent) {
+    if (fallbackStudent.email) {
+      index = students.findIndex((s) => (s.email || "").toLowerCase() === fallbackStudent.email.toLowerCase());
+    }
+  }
+
+  if (index === -1 && fallbackStudent) {
+    const restored: StudentRecord = {
+      ...fallbackStudent,
+      id: cleanId || fallbackStudent.id,
+      fullName: fallbackStudent.fullName || `${fallbackStudent.name || ""} ${fallbackStudent.surname || ""}`.trim(),
+    };
+    students.unshift(restored);
+    index = 0;
+  }
+
   if (index === -1) return null;
 
   students[index] = { ...students[index], ...updates };
@@ -234,7 +257,10 @@ export async function updateStudent(id: string, updates: Partial<StudentRecord>)
   return students[index];
 }
 
-export async function approveStudentWithCredentials(id: string): Promise<{ 
+export async function approveStudentWithCredentials(
+  id: string,
+  fallbackStudent?: StudentRecord
+): Promise<{ 
   student: StudentRecord; 
   generatedCredentials: { 
     username: string; 
@@ -248,7 +274,27 @@ export async function approveStudentWithCredentials(id: string): Promise<{
   } 
 } | null> {
   const students = await getStudents();
-  const index = students.findIndex((s) => s.id === id);
+  const cleanId = decodeURIComponent(String(id || "")).trim();
+  
+  let index = students.findIndex((s) => String(s.id).trim() === cleanId || s.id === id);
+
+  // Eğer mevcut lambda container'ında ID ile bulunamazsa, e-posta veya fallback nesnesiyle kurtar
+  if (index === -1 && fallbackStudent) {
+    if (fallbackStudent.email) {
+      index = students.findIndex((s) => (s.email || "").toLowerCase() === fallbackStudent.email.toLowerCase());
+    }
+  }
+
+  if (index === -1 && fallbackStudent) {
+    const restored: StudentRecord = {
+      ...fallbackStudent,
+      id: cleanId || fallbackStudent.id,
+      fullName: fallbackStudent.fullName || `${fallbackStudent.name || ""} ${fallbackStudent.surname || ""}`.trim(),
+    };
+    students.unshift(restored);
+    index = 0;
+  }
+
   if (index === -1) return null;
 
   const current = students[index];

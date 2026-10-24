@@ -54,6 +54,7 @@ export default function KayitPage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string>("");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
 
   // KVKK State
   const [kvkkApproved, setKvkkApproved] = useState(false);
@@ -64,34 +65,93 @@ export default function KayitPage() {
 
   const startCamera = async () => {
     setPhotoError("");
+    setCameraLoading(true);
+
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setPhotoError("Tarayıcınız kamera erişimini desteklemiyor veya güvenli bağlantı (HTTPS) gereklidir.");
+      setCameraLoading(false);
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+      } catch (strictErr) {
+        // Ön kamera kısıtlamasını desteklemeyen masaüstü web kameraları için fallback
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
       }
+
+      streamRef.current = stream;
       setIsCameraOpen(true);
-    } catch (err) {
-      setPhotoError("Kameraya erişilemedi. Lütfen kamera izinlerinizi kontrol edin.");
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setPhotoError("Kamera izni verilmedi. Lütfen tarayıcınızın adres çubuğundaki kilit simgesine tıklayıp kameraya izin verin veya dosya yükleyin.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        setPhotoError("Cihazınızda kullanılabilir bir kamera bulunamadı.");
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        setPhotoError("Kamera şu an başka bir uygulama tarafından kullanılıyor veya kilitli.");
+      } else {
+        setPhotoError("Kameraya erişilemedi. Lütfen kamera izinlerinizi kontrol edin veya dosya yükleyin.");
+      }
+    } finally {
+      setCameraLoading(false);
     }
   };
 
+  // Kamera açıldığında video elementine akışı bağla ve oynat
+  useEffect(() => {
+    if (isCameraOpen && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Video auto-play warning:", err);
+        });
+      }
+    }
+  }, [isCameraOpen]);
+
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setIsCameraOpen(false);
+    setCameraLoading(false);
   };
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const width = video.videoWidth || 640;
+      const height = video.videoHeight || 480;
+
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
       if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        const imageDataUrl = canvasRef.current.toDataURL("image/jpeg", 0.85);
+        // Önizleme aynalama ile uyumlu olması için yatay çevirerek çiz
+        context.translate(width, 0);
+        context.scale(-1, 1);
+        context.drawImage(video, 0, 0, width, height);
+        const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
         setPhoto(imageDataUrl);
         stopCamera();
       }
@@ -211,6 +271,15 @@ export default function KayitPage() {
         throw new Error(data.error || "Başvuru kaydedilirken bir hata oluştu.");
       }
 
+      if (data.student) {
+        try {
+          const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+          const arr = cached ? JSON.parse(cached) : [];
+          arr.unshift(data.student);
+          localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(arr));
+        } catch (e) {}
+      }
+
       setIsSubmitted(true);
     } catch (err: any) {
       setSubmitError(err.message || "Bağlantı hatası oluştu, lütfen tekrar deneyin.");
@@ -322,31 +391,80 @@ export default function KayitPage() {
                         <button 
                           type="button" 
                           onClick={startCamera}
-                          className="flex-1 flex items-center justify-center gap-2 bg-[#D97725] text-white py-3 px-4 rounded-xl font-bold hover:bg-[#c36a21] transition-colors"
+                          disabled={cameraLoading}
+                          className="flex-1 flex items-center justify-center gap-2 bg-[#D97725] text-white py-3 px-4 rounded-xl font-bold hover:bg-[#c36a21] transition-colors disabled:opacity-60 shadow-sm"
                         >
-                          <Camera className="w-5 h-5" /> Kamerayla Çek
+                          {cameraLoading ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" /> Kamera Başlatılıyor...
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="w-5 h-5" /> Kamerayla Çek
+                            </>
+                          )}
                         </button>
                       </div>
-                      {photoError && <p className="text-red-500 text-sm font-medium">{photoError}</p>}
+                      {photoError && (
+                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>{photoError}</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="bg-gray-900 p-4 rounded-2xl relative">
-                      <button 
-                        type="button" 
-                        onClick={stopCamera}
-                        className="absolute top-2 right-2 z-10 bg-black/50 text-white p-1 rounded-full hover:bg-black"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                      <video ref={videoRef} autoPlay playsInline className="w-full h-48 bg-black object-cover rounded-xl mb-4 transform scale-x-[-1]" />
+                    <div className="bg-gray-950 p-4 rounded-2xl relative border border-white/10 shadow-2xl">
+                      {/* Canlı Kamera Başlığı ve Kapatma Butonu */}
+                      <div className="flex items-center justify-between mb-3 px-1">
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                          Kamera Aktif
+                        </span>
+                        <button 
+                          type="button" 
+                          onClick={stopCamera}
+                          className="bg-white/10 text-white p-1.5 rounded-full hover:bg-white/20 transition-colors"
+                          title="Kamerayı Kapat"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Video Önizleme */}
+                      <div className="relative rounded-xl overflow-hidden bg-black mb-3 border border-white/10">
+                        <video 
+                          ref={videoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className="w-full h-56 sm:h-64 object-cover transform scale-x-[-1]" 
+                        />
+                        {/* Çekim Rehberi Çizgisi */}
+                        <div className="absolute inset-0 pointer-events-none border-2 border-white/20 rounded-xl m-3 flex items-end justify-center pb-2">
+                          <span className="text-[11px] text-white/70 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                            Yüzünüzü ortalayın ve butona basın
+                          </span>
+                        </div>
+                      </div>
+
                       <canvas ref={canvasRef} className="hidden" />
-                      <button 
-                        type="button" 
-                        onClick={capturePhoto}
-                        className="w-full bg-[#2E5A27] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
-                      >
-                        <Camera className="w-5 h-5" /> Fotoğrafı Çek
-                      </button>
+
+                      <div className="flex gap-2">
+                        <button 
+                          type="button" 
+                          onClick={stopCamera}
+                          className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-bold text-xs transition-colors"
+                        >
+                          Vazgeç
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={capturePhoto}
+                          className="flex-1 bg-[#2E5A27] hover:bg-[#386c30] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-colors text-sm"
+                        >
+                          <Camera className="w-5 h-5" /> Fotoğrafı Çek ve Kaydet
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

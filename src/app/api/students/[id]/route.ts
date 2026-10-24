@@ -7,10 +7,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const updates = await request.json();
+    const body = await request.json();
+    const { status, student: fallbackStudent, ...otherUpdates } = body;
 
-    if (updates.status === "Onaylandı") {
-      const result = await approveStudentWithCredentials(id);
+    if (status === "Onaylandı") {
+      const result = await approveStudentWithCredentials(id, fallbackStudent);
       if (!result) {
         return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
       }
@@ -21,7 +22,8 @@ export async function PATCH(
       });
     }
 
-    const updated = await updateStudent(id, updates);
+    const updates = { ...(status ? { status } : {}), ...otherUpdates };
+    const updated = await updateStudent(id, updates, fallbackStudent);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
     }

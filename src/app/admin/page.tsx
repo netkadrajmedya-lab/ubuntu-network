@@ -182,17 +182,32 @@ export default function AdminDashboard() {
     reader.onload = async (ev) => {
       const dataUrl = ev.target?.result as string;
       try {
-        const res = await fetch(`/api/students/${studentId}`, {
+        const fallbackStudent = selectedStudent?.id === studentId ? selectedStudent : students.find(s => s.id === studentId);
+        const payload = {
+          id: studentId,
+          edevletDocName: file.name,
+          edevletDocUrl: dataUrl,
+          student: fallbackStudent,
+        };
+        let res = await fetch(`/api/students/${studentId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            edevletDocName: file.name,
-            edevletDocUrl: dataUrl,
-          }),
+          body: JSON.stringify(payload),
         });
+        if (res.status === 404) {
+          res = await fetch("/api/students", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        }
         const data = await res.json();
         if (data.success) {
-          setStudents(prev => prev.map(s => s.id === studentId ? { ...s, edevletDocName: file.name, edevletDocUrl: dataUrl } : s));
+          setStudents(prev => {
+            const nextList = prev.map(s => s.id === studentId ? { ...s, edevletDocName: file.name, edevletDocUrl: dataUrl } : s);
+            try { localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(nextList)); } catch (e) {}
+            return nextList;
+          });
           if (selectedStudent?.id === studentId) {
             setSelectedStudent(prev => prev ? { ...prev, edevletDocName: file.name, edevletDocUrl: dataUrl } : null);
           }
@@ -262,7 +277,31 @@ export default function AdminDashboard() {
       const dataQuotes = await resQuotes.json();
       const dataAdmins = await resAdmins.json();
 
-      if (dataStudents.success) setStudents(dataStudents.students || []);
+      if (dataStudents.success) {
+        if (Array.isArray(dataStudents.students) && dataStudents.students.length > 0) {
+          setStudents(dataStudents.students);
+          try {
+            localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(dataStudents.students));
+          } catch (e) {}
+        } else {
+          // Sunucu henüz soğuk başlangıçtaysa tarayıcı önbelleğinden geri yükle
+          try {
+            const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setStudents(parsed);
+              } else {
+                setStudents([]);
+              }
+            } else {
+              setStudents([]);
+            }
+          } catch {
+            setStudents([]);
+          }
+        }
+      }
       if (dataQuotes.success) setQuotes(dataQuotes.quotes || []);
       if (dataAdmins.success) setAdminUsers(dataAdmins.admins || []);
     } catch (err) {
@@ -286,20 +325,46 @@ export default function AdminDashboard() {
       return;
     }
 
+    const currentStudentObj = selectedStudent?.id === id 
+      ? selectedStudent 
+      : students.find(s => s.id === id);
+
     try {
       setStatusUpdatingId(id);
-      const res = await fetch(`/api/students/${id}`, {
+
+      const payload = {
+        id,
+        status,
+        student: currentStudentObj,
+      };
+
+      // 1. Önce /api/students/${id} endpoint'ini çağır
+      let res = await fetch(`/api/students/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       });
+
+      // 2. Farklı serverless lambda konteyneri olması durumunda /api/students fallback'i
+      if (res.status === 404) {
+        res = await fetch("/api/students", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Öğrenci durumu güncellenemedi.");
       }
 
-      const updated = data.student || { id, status };
-      setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+      const updated = data.student || (currentStudentObj ? { ...currentStudentObj, status } : { id, status });
+      setStudents(prev => {
+        const nextList = prev.map(s => s.id === id ? { ...s, ...updated } : s);
+        try { localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(nextList)); } catch (e) {}
+        return nextList;
+      });
       if (selectedStudent?.id === id) {
         setSelectedStudent(prev => prev ? { ...prev, ...updated } : null);
       }
@@ -309,7 +374,7 @@ export default function AdminDashboard() {
           username: data.generatedCredentials.username,
           password: data.generatedCredentials.password,
           emailContent: data.generatedCredentials.emailContent || {
-            to: data.student?.email || "",
+            to: data.student?.email || currentStudentObj?.email || "",
             subject: "Ubuntu Network - Başvurunuz Onaylandı! Giriş Bilgileriniz",
             body: data.generatedCredentials.emailText || "",
           },

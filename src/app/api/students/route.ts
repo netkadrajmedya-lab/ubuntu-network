@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStudents, createStudent } from "@/lib/db";
+import { getStudents, createStudent, updateStudent, approveStudentWithCredentials } from "@/lib/db";
 
 export async function GET(request: Request) {
   try {
@@ -51,6 +51,39 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, student: newStudent }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, status, student: fallbackStudent, ...otherUpdates } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Öğrenci ID belirtilmedi." }, { status: 400 });
+    }
+
+    if (status === "Onaylandı") {
+      const result = await approveStudentWithCredentials(id, fallbackStudent);
+      if (!result) {
+        return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
+      }
+      return NextResponse.json({
+        success: true,
+        student: result.student,
+        generatedCredentials: result.generatedCredentials,
+      });
+    }
+
+    const updates = { ...(status ? { status } : {}), ...otherUpdates };
+    const updated = await updateStudent(id, updates, fallbackStudent);
+    if (!updated) {
+      return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, student: updated });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
