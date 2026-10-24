@@ -7,6 +7,7 @@ import {
   MapPin, Send 
 } from "lucide-react";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function HakkimizdaPage() {
@@ -239,34 +240,7 @@ export default function HakkimizdaPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#111111] py-16 border-t border-white/10 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-          <Globe className="h-12 w-12 text-[#2E5A27] mb-4" />
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-widest uppercase">Ubuntu</h2>
-          <p className="text-[#D97725] text-sm tracking-[0.3em] font-semibold mb-10">
-            {t("footer_slogan")}
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-8 mb-12">
-            <Link href="/#nasil-calisir" className="text-gray-400 hover:text-white transition-colors">
-              {t("nav_how_it_works")}
-            </Link>
-            <Link href="/#vitrin" className="text-gray-400 hover:text-white transition-colors">
-              {t("nav_vitrin")}
-            </Link>
-            <Link href="/kayit" className="text-gray-400 hover:text-white transition-colors">
-              {t("nav_register")}
-            </Link>
-            <Link href="/giris" className="text-gray-400 hover:text-white transition-colors">
-              {t("nav_login")}
-            </Link>
-          </div>
-
-          <p className="text-gray-600 text-sm">
-            &copy; {new Date().getFullYear()} {t("footer_rights")}
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
