@@ -414,24 +414,33 @@ export default function PremiumVitrin() {
           </motion.div>
         )}
 
-        {/* Eğer Onaylanmış Öğrenci Yoksa Gösterilecek Canlıya Alma / Başvuru Karşılama Kartı */}
+        {/* Karşılama ve Eşleştirme Kartı */}
         {!loading && students.length === 0 && (
-          <div className="text-center py-16 px-6 bg-gradient-to-b from-white/10 to-white/5 border border-white/15 rounded-3xl backdrop-blur-xl max-w-3xl mx-auto shadow-2xl">
-            <div className="w-20 h-20 bg-[#D97725]/10 border border-[#D97725]/30 text-[#D97725] rounded-full flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-10 h-10" />
+          <div className="text-center py-16 px-6 sm:px-12 bg-gradient-to-b from-white/10 to-white/5 border border-white/15 rounded-3xl backdrop-blur-xl max-w-3xl mx-auto shadow-2xl relative overflow-hidden">
+            <div className="w-16 h-16 bg-[#D97725]/10 border border-[#D97725]/30 text-[#D97725] rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="w-8 h-8" />
             </div>
-            <h3 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
-              Premium Vitrin Canlıya Alındı!
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-[11px] font-bold tracking-widest uppercase mb-4">
+              {t("vitrin_empty_badge")}
+            </div>
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+              {t("vitrin_empty_title")}
             </h3>
-            <p className="text-gray-300 text-base md:text-lg max-w-xl mx-auto mb-8 font-light leading-relaxed">
-              Öğrenci başvuruları kabul edilmeye başlanmıştır. Yönetici onayından geçen ilk seçkin yetenekler doğrudan bu vitrinde işverenlere sergilenecektir.
+            <p className="text-gray-300 text-sm sm:text-base max-w-xl mx-auto mb-8 font-light leading-relaxed">
+              {t("vitrin_empty_desc")}
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a 
                 href="/kayit" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-full font-bold shadow-lg hover:shadow-green-900/40 transition-all text-sm uppercase tracking-wider"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-full font-bold shadow-lg hover:shadow-green-900/40 transition-all text-sm uppercase tracking-wider"
               >
-                Hemen Öğrenci Başvurusu Yap <ArrowRight className="w-4 h-4" />
+                {t("vitrin_empty_btn_student")} <ArrowRight className="w-4 h-4" />
+              </a>
+              <a 
+                href="#nasil-calisir" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold border border-white/20 transition-all text-sm uppercase tracking-wider backdrop-blur-sm"
+              >
+                {t("vitrin_empty_btn_employer")}
               </a>
             </div>
           </div>

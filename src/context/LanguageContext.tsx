@@ -101,6 +101,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "Talebi Gönder",
     vitrin_modal_success: "Talebiniz Başarıyla Alındı!",
     vitrin_modal_success_desc: "Yöneticilerimiz en kısa sürede sizinle iletişime geçecektir.",
+    vitrin_empty_badge: "PREMİUM YETENEK EKOSİSTEMİ",
+    vitrin_empty_title: "Geleceğin Seçkin Yetenekleri ile Tanışın",
+    vitrin_empty_desc: "Ubuntu Network; çok dilli, vizyoner ve akademik başarısıyla öne çıkan üniversite öğrencilerini kurumsal işverenlerle buluşturan prestijli bir ekosistemdir. Ekibinize taze bir güç katmak veya yeteneklerinizi sergileyerek seçkin projelere dahil olmak için hemen aramıza katılın.",
+    vitrin_empty_btn_student: "Öğrenci Olarak Başvur",
+    vitrin_empty_btn_employer: "Nasıl Çalışır? İncele",
 
     // Hakkımızda
     about_hero_badge: "KÜRESEL VİZYON & ORTAK DEĞERLER",
@@ -208,6 +213,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "Submit Proposal",
     vitrin_modal_success: "Your Request Was Received!",
     vitrin_modal_success_desc: "Our management team will get in touch with you shortly.",
+    vitrin_empty_badge: "PREMIUM TALENT ECOSYSTEM",
+    vitrin_empty_title: "Meet the Elite Talents of the Future",
+    vitrin_empty_desc: "Ubuntu Network is a prestigious ecosystem connecting multilingual, visionary, and academically accomplished university students with corporate employers. Join us today to empower your team or showcase your skills in global projects.",
+    vitrin_empty_btn_student: "Apply as a Student",
+    vitrin_empty_btn_employer: "Explore How It Works",
 
     // About Page
     about_hero_badge: "GLOBAL VISION & SHARED VALUES",
@@ -315,6 +325,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "Envoyer la Demande",
     vitrin_modal_success: "Votre Demande a été Reçue !",
     vitrin_modal_success_desc: "Notre équipe vous contactera dans les plus brefs délais.",
+    vitrin_empty_badge: "ÉCOSYSTÈME DE TALENTS D'ÉLITE",
+    vitrin_empty_title: "Rencontrez les Futurs Leaders de Demain",
+    vitrin_empty_desc: "Ubuntu Network est un écosystème prestigieux reliant des étudiants multilingues et visionnaires aux entreprises corporatives. Rejoignez-nous pour renforcer votre équipe ou intégrer des projets prestigieux.",
+    vitrin_empty_btn_student: "Postuler en tant qu'Étudiant",
+    vitrin_empty_btn_employer: "Découvrir le Fonctionnement",
 
     // About Page
     about_hero_badge: "VISION MONDIALE & VALEURS PARTAGÉES",
@@ -422,6 +437,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "Enviar Solicitud",
     vitrin_modal_success: "¡Su Solicitud ha sido Recibida!",
     vitrin_modal_success_desc: "Nuestro equipo se comunicará con usted en breve.",
+    vitrin_empty_badge: "ECOSISTEMA DE TALENTO DE ÉLITE",
+    vitrin_empty_title: "Conozca a los Talentos Líderes del Futuro",
+    vitrin_empty_desc: "Ubuntu Network es un ecosistema prestigioso que conecta a estudiantes universitarios multilingües y visionarios con empresas líderes. Únase hoy para fortalecer su equipo o participar en proyectos globales.",
+    vitrin_empty_btn_student: "Postularse como Estudiante",
+    vitrin_empty_btn_employer: "Cómo Funciona",
 
     // About Page
     about_hero_badge: "VISIÓN GLOBAL & VALORES COMPARTIDOS",
@@ -529,6 +549,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "إرسال الطلب",
     vitrin_modal_success: "تم استلام طلبكم بنجاح!",
     vitrin_modal_success_desc: "سيتواصل معكم فريق الإدارة في أقرب وقت.",
+    vitrin_empty_badge: "منظومة المواهب الرائدة",
+    vitrin_empty_title: "تعرف على قادة وكفاءات المستقبل",
+    vitrin_empty_desc: "شبكة أوبونتو هي بيئة مرموقة تربط طلاب الجامعات المتميزين ومتعددي اللغات بأصحاب الأعمال والشركات العالمية. انضم إلينا اليوم لتعزيز فريق عملك أو لعرض مهاراتك في مشاريع نوعية.",
+    vitrin_empty_btn_student: "التقديم كطالب",
+    vitrin_empty_btn_employer: "كيف يعمل النظام؟",
 
     // About Page
     about_hero_badge: "رؤية عالمية وقيم مشتركة",
@@ -636,6 +661,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     vitrin_modal_submit: "Tuma Ombi",
     vitrin_modal_success: "Ombi Lako Limepokelewa!",
     vitrin_modal_success_desc: "Uongozi wetu utawasiliana nawe hivi karibuni.",
+    vitrin_empty_badge: "MFUMO WA VIPAJI BORA",
+    vitrin_empty_title: "Kutana na Viongozi Mahiri wa Baadaye",
+    vitrin_empty_desc: "Ubuntu Network ni mfumo maalum unaounganisha wanafunzi wa vyuo vikuu wenye lugha nyingi na maono makubwa na waajiri wa kimataifa. Jiunge nasi leo ili kuimarisha timu yako au kuonyesha vipaji vyako katika miradi mikubwa.",
+    vitrin_empty_btn_student: "Omba Kama Mwanafunzi",
+    vitrin_empty_btn_employer: "Jinsi Inavyofanya Kazi",
 
     // About Page
     about_hero_badge: "MAONO YA KIMATAIFA NA MAADILI YA PAMOJA",
