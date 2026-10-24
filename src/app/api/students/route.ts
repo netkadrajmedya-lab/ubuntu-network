@@ -70,10 +70,22 @@ export async function PATCH(request: Request) {
       if (!result) {
         return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
       }
+
+      // Otomatik e-posta gönderimi (Arka Plan)
+      let emailDelivery = { success: false, message: "E-posta gönderilmedi." };
+      try {
+        const { sendStudentApprovalEmail } = await import("@/lib/mail");
+        emailDelivery = await sendStudentApprovalEmail(result.student, result.generatedCredentials);
+      } catch (err: any) {
+        console.warn("Otomatik e-posta gönderim uyarısı:", err);
+        emailDelivery = { success: false, message: err.message || "E-posta servisine erişilemedi." };
+      }
+
       return NextResponse.json({
         success: true,
         student: result.student,
         generatedCredentials: result.generatedCredentials,
+        emailDelivery,
       });
     }
 

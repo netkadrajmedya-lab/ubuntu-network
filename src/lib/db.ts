@@ -79,17 +79,46 @@ const SEED_STORAGE_DIR = path.join(process.cwd(), "src", "data", "storage");
 const STUDENTS_FILE = path.join(STORAGE_DIR, "students.json");
 const QUOTES_FILE = path.join(STORAGE_DIR, "quotes.json");
 const ADMINS_FILE = path.join(STORAGE_DIR, "admins.json");
+const SMTP_SETTINGS_FILE = path.join(STORAGE_DIR, "smtp.json");
 
 const SEED_STUDENTS_FILE = path.join(SEED_STORAGE_DIR, "students.json");
 const SEED_QUOTES_FILE = path.join(SEED_STORAGE_DIR, "quotes.json");
 const SEED_ADMINS_FILE = path.join(SEED_STORAGE_DIR, "admins.json");
+const SEED_SMTP_SETTINGS_FILE = path.join(SEED_STORAGE_DIR, "smtp.json");
+
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  fromName: string;
+  fromEmail: string;
+  resendApiKey?: string;
+  provider: "smtp" | "resend";
+  autoSendOnApproval: boolean;
+}
 
 // Sunucusuz fonksiyonlar arasında bellekte canlı tutulan küresel önbellek (Memory Cache)
 declare global {
   var __UBUNTU_STUDENTS__: StudentRecord[] | undefined;
   var __UBUNTU_QUOTES__: QuoteRecord[] | undefined;
   var __UBUNTU_ADMINS__: AdminUserRecord[] | undefined;
+  var __UBUNTU_SMTP_CONFIG__: SmtpConfig | undefined;
 }
+
+const DEFAULT_SMTP_CONFIG: SmtpConfig = {
+  host: process.env.SMTP_HOST || "",
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_SECURE === "true" || (Number(process.env.SMTP_PORT) || 465) === 465,
+  user: process.env.SMTP_USER || "",
+  pass: process.env.SMTP_PASS || "",
+  fromName: process.env.SMTP_FROM_NAME || "Ubuntu Network",
+  fromEmail: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "bilgi@ubuntunetwork.com.tr",
+  resendApiKey: process.env.RESEND_API_KEY || "",
+  provider: (process.env.RESEND_API_KEY && !process.env.SMTP_HOST ? "resend" : "smtp") as "smtp" | "resend",
+  autoSendOnApproval: true,
+};
 
 const DEFAULT_ADMIN: AdminUserRecord = {
   id: "admin_super_1",
@@ -504,4 +533,42 @@ export async function deleteAdminUser(id: string): Promise<boolean> {
   if (filtered.length === admins.length) return false;
   await saveAdminUsers(filtered);
   return true;
+}
+
+// SMTP & E-POSTA AYARLARI
+export async function getSmtpSettings(): Promise<SmtpConfig> {
+  if (globalThis.__UBUNTU_SMTP_CONFIG__) {
+    return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
+  }
+
+  try {
+    const data = await fs.readFile(SMTP_SETTINGS_FILE, "utf-8");
+    const parsed = JSON.parse(data);
+    globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG, ...parsed };
+    return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
+  } catch {
+    try {
+      const seedData = await fs.readFile(SEED_SMTP_SETTINGS_FILE, "utf-8");
+      const parsed = JSON.parse(seedData);
+      globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG, ...parsed };
+    } catch {
+      globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG };
+    }
+    return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
+  }
+}
+
+export async function saveSmtpSettings(config: Partial<SmtpConfig>): Promise<SmtpConfig> {
+  const current = await getSmtpSettings();
+  const updated: SmtpConfig = { ...current, ...config };
+  globalThis.__UBUNTU_SMTP_CONFIG__ = updated;
+
+  try {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    await fs.writeFile(SMTP_SETTINGS_FILE, JSON.stringify(updated, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("SMTP config save error (using memory cache):", err);
+  }
+
+  return updated;
 }
