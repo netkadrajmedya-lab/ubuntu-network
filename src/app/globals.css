@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ubuntu-green: #2E5A27;
+  --color-ubuntu-green-light: #3A6B35;
+  --color-ubuntu-orange: #D97725;
+  --color-ubuntu-orange-light: #E88836;
+  --color-ubuntu-bg: #FAF9F6;
+  --color-ubuntu-text: #1A1A1A;
+}
+
+@layer base {
+  body {
+    @apply bg-[#FAF9F6] text-[#1A1A1A] antialiased;
+  }
+}

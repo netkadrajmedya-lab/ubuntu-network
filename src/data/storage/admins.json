@@ -1,0 +1,19 @@
+[
+  {
+    "id": "admin_super_1",
+    "username": "admin",
+    "passwordHash": "ubuntu2026",
+    "fullName": "Sistem Yöneticisi",
+    "email": "admin@ubuntunetwork.com",
+    "role": "super_admin",
+    "permissions": {
+      "canApproveStudents": true,
+      "canViewBudgets": true,
+      "canManageQuotes": true,
+      "canManageAdmins": true
+    },
+    "status": "active",
+    "createdAt": "2026-10-23T04:17:56.268Z",
+    "lastLogin": "2026-10-23T05:20:59.486Z"
+  }
+]
