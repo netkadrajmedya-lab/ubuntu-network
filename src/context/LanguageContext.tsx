@@ -126,7 +126,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "İleri Düzey (C2)",
     founder_cred_uni: "Bursa Uludağ Üniv. İlahiyat Fakültesi Mezunu",
     founder_cred_pres: "Bursa Afrika Öğrencileri Topluluğu Eski Bşk.",
-    founder_photo_note: "* Kendi orijinal fotoğrafınızı public/founder.jpg yoluna ekleyerek kolayca güncelleyebilirsiniz.",
   },
 
   en: {
@@ -234,7 +233,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "Fluent (C2)",
     founder_cred_uni: "Graduate of Bursa Uludağ Univ. Faculty of Theology",
     founder_cred_pres: "Former President of Bursa African Students Community",
-    founder_photo_note: "* You can easily update this photo by adding public/founder.jpg to your project.",
   },
 
   fr: {
@@ -342,7 +340,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "Niveau Supérieur (C2)",
     founder_cred_uni: "Diplômé de la Faculté de Théologie de l'Univ. Bursa Uludağ",
     founder_cred_pres: "Ancien Président de la Communauté des Étudiants Africains de Bursa",
-    founder_photo_note: "* Vous pouvez remplacer cette photo en plaçant public/founder.jpg dans votre projet.",
   },
 
   es: {
@@ -450,7 +447,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "Nivel Avanzado (C2)",
     founder_cred_uni: "Graduado de la Fac. de Teología de la Univ. Bursa Uludağ",
     founder_cred_pres: "Ex Presidente de la Comunidad de Estudiantes Africanos de Bursa",
-    founder_photo_note: "* Puede actualizar esta foto agregando public/founder.jpg a su proyecto.",
   },
 
   ar: {

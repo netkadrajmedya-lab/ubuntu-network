@@ -149,11 +149,6 @@ export default function HakkimizdaPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Bilgi Notu */}
-              <p className="text-[11px] text-gray-500 mt-4 text-center italic">
-                {t("founder_photo_note")}
-              </p>
             </div>
 
             {/* Kurucu Biyografi ve Başarı Detayı */}

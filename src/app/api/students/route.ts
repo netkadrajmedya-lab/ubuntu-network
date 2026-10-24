@@ -47,6 +47,7 @@ export async function POST(request: Request) {
       email: body.email,
       photo: body.photo || "",
       edevletDocName: body.edevletDocName || "ogrenci_belgesi.pdf",
+      edevletDocUrl: body.edevletDocUrl || "",
     });
 
     return NextResponse.json({ success: true, student: newStudent }, { status: 201 });

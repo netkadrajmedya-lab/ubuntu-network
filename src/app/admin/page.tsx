@@ -7,7 +7,7 @@ import {
   Building2, Phone, Mail, Trash2, ExternalLink, Lock, Loader2, 
   Sparkles, AlertCircle, RefreshCw, GraduationCap, MapPin, Globe, 
   KeyRound, UserPlus, ShieldAlert, CheckCircle2, Sliders, Edit3,
-  Copy, Send
+  Copy, Send, Download, MessageCircle, Upload, FileText
 } from "lucide-react";
 
 interface CurrentAdmin {
@@ -48,6 +48,7 @@ interface Student {
   email: string;
   photo?: string;
   edevletDocName?: string;
+  edevletDocUrl?: string;
   status: "Bekliyor" | "Onaylandı" | "Reddedildi";
   studentUsername?: string;
   studentPassword?: string;
@@ -131,6 +132,81 @@ export default function AdminDashboard() {
     setTimeout(() => setCopiedField(null), 2500);
   };
 
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+
+  const handleViewDoc = (docUrl?: string, docName?: string) => {
+    if (!docUrl) {
+      alert("Bu başvuru için yüklenmiş belge içeriği bulunmamaktadır.");
+      return;
+    }
+    if (docUrl.startsWith("data:")) {
+      try {
+        const arr = docUrl.split(",");
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, "_blank");
+      } catch (e) {
+        window.open(docUrl, "_blank");
+      }
+    } else {
+      window.open(docUrl, "_blank");
+    }
+  };
+
+  const handleDownloadDoc = (docUrl?: string, docName?: string) => {
+    if (!docUrl) return;
+    const a = document.createElement("a");
+    a.href = docUrl;
+    a.download = docName || "ogrenci_belgesi.pdf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleAdminAttachDoc = async (e: React.ChangeEvent<HTMLInputElement>, studentId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Belge boyutu 8MB'dan küçük olmalıdır.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      try {
+        const res = await fetch(`/api/students/${studentId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            edevletDocName: file.name,
+            edevletDocUrl: dataUrl,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setStudents(prev => prev.map(s => s.id === studentId ? { ...s, edevletDocName: file.name, edevletDocUrl: dataUrl } : s));
+          if (selectedStudent?.id === studentId) {
+            setSelectedStudent(prev => prev ? { ...prev, edevletDocName: file.name, edevletDocUrl: dataUrl } : null);
+          }
+          alert("Öğrenci belgesi başarıyla sisteme kaydedildi!");
+        } else {
+          alert("Belge kaydedilemedi: " + (data.error || "Bilinmeyen hata."));
+        }
+      } catch (err: any) {
+        alert("Bağlantı hatası: " + err.message);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Oturum Kontrolü
   useEffect(() => {
     const savedUser = sessionStorage.getItem("ubuntu_admin_user");
@@ -204,32 +280,49 @@ export default function AdminDashboard() {
 
   // Öğrenci Durum Güncelle
   const handleStudentStatus = async (id: string, status: "Onaylandı" | "Reddedildi" | "Bekliyor") => {
-    if (!currentUser?.permissions.canApproveStudents) {
+    const canApprove = currentUser?.role === "super_admin" || currentUser?.permissions?.canApproveStudents;
+    if (!canApprove) {
       alert("Bu işlem için öğrenci onaylama yetkiniz bulunmamaktadır.");
       return;
     }
+
     try {
+      setStatusUpdatingId(id);
       const res = await fetch(`/api/students/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       const data = await res.json();
-      if (data.success) {
-        const updated = data.student || { status };
-        setStudents(students.map(s => s.id === id ? { ...s, ...updated } : s));
-        if (selectedStudent?.id === id) {
-          setSelectedStudent({ ...selectedStudent, ...updated });
-        }
-        if (status === "Onaylandı" && data.generatedCredentials) {
-          setApprovalModalData({
-            student: data.student,
-            credentials: data.generatedCredentials,
-          });
-        }
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Öğrenci durumu güncellenemedi.");
       }
-    } catch (err) {
-      alert("Öğrenci durumu güncellenemedi.");
+
+      const updated = data.student || { id, status };
+      setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+      if (selectedStudent?.id === id) {
+        setSelectedStudent(prev => prev ? { ...prev, ...updated } : null);
+      }
+
+      if (status === "Onaylandı" && data.generatedCredentials) {
+        const creds = {
+          username: data.generatedCredentials.username,
+          password: data.generatedCredentials.password,
+          emailContent: data.generatedCredentials.emailContent || {
+            to: data.student?.email || "",
+            subject: "Ubuntu Network - Başvurunuz Onaylandı! Giriş Bilgileriniz",
+            body: data.generatedCredentials.emailText || "",
+          },
+        };
+        setApprovalModalData({
+          student: data.student || updated,
+          credentials: creds,
+        });
+      }
+    } catch (err: any) {
+      alert("Hata: " + (err.message || "Öğrenci durumu güncellenemedi."));
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -919,25 +1012,27 @@ export default function AdminDashboard() {
                                     <Eye className="w-4 h-4" />
                                   </button>
                                   
-                                  {currentUser.permissions.canApproveStudents && (
+                                  {(currentUser.role === "super_admin" || currentUser.permissions.canApproveStudents) && (
                                     <>
                                       {student.status !== "Onaylandı" && (
                                         <button 
+                                          disabled={statusUpdatingId === student.id}
                                           onClick={() => handleStudentStatus(student.id, "Onaylandı")}
-                                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-bold" 
+                                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-bold disabled:opacity-50" 
                                           title="Onayla ve Vitrine Çıkar"
                                         >
-                                          <Check className="w-4 h-4" />
+                                          {statusUpdatingId === student.id ? <Loader2 className="w-4 h-4 animate-spin text-green-600" /> : <Check className="w-4 h-4" />}
                                         </button>
                                       )}
 
                                       {student.status !== "Reddedildi" && (
                                         <button 
+                                          disabled={statusUpdatingId === student.id}
                                           onClick={() => handleStudentStatus(student.id, "Reddedildi")}
-                                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" 
+                                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50" 
                                           title="Reddet"
                                         >
-                                          <X className="w-4 h-4" />
+                                          {statusUpdatingId === student.id ? <Loader2 className="w-4 h-4 animate-spin text-red-500" /> : <X className="w-4 h-4" />}
                                         </button>
                                       )}
 
@@ -1496,13 +1591,53 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase font-bold">E-Devlet Öğrenci Belgesi</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs font-semibold text-gray-700 bg-white border px-3 py-1.5 rounded-lg">
-                        📄 {selectedStudent.edevletDocName || "ogrenci_belgesi.pdf"}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className="text-xs font-semibold text-gray-800 bg-white border border-gray-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm max-w-[200px] truncate" title={selectedStudent.edevletDocName || "ogrenci_belgesi.pdf"}>
+                        <FileText className="w-3.5 h-3.5 text-[#2E5A27] shrink-0" />
+                        <span className="truncate">{selectedStudent.edevletDocName || "ogrenci_belgesi.pdf"}</span>
                       </span>
-                      <span className="text-xs text-green-700 font-bold bg-green-100 px-2.5 py-1 rounded-md">
-                        Doğrulandı
-                      </span>
+
+                      {selectedStudent.edevletDocUrl ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleViewDoc(selectedStudent.edevletDocUrl, selectedStudent.edevletDocName)}
+                            className="px-3 py-1.5 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                            title="Belgeyi Yeni Sekmede Görüntüle"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Görüntüle
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDoc(selectedStudent.edevletDocUrl, selectedStudent.edevletDocName)}
+                            className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                            title="Belgeyi Bilgisayara İndir"
+                          >
+                            <Download className="w-3.5 h-3.5" /> İndir
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <label className="px-2.5 py-1.5 bg-[#D97725] hover:bg-[#c36a21] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-sm">
+                            <Upload className="w-3.5 h-3.5" /> Belge Yükle
+                            <input
+                              type="file"
+                              accept=".pdf, image/*"
+                              className="hidden"
+                              onChange={(e) => handleAdminAttachDoc(e, selectedStudent.id)}
+                            />
+                          </label>
+                          <a
+                            href={`https://wa.me/${selectedStudent.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Merhaba ${selectedStudent.fullName || selectedStudent.name}, Ubuntu Network başvurunuzun onaylanması için lütfen e-Devlet güncel öğrenci belgenizi bu mesaja yanıt olarak iletiniz.`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                            title="Adaya WhatsApp'tan Belge İsteme Mesajı Gönder"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp&apos;tan İste
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1555,22 +1690,26 @@ export default function AdminDashboard() {
                 >
                   Kapat
                 </button>
-                {currentUser.permissions.canApproveStudents && (
+                {(currentUser.role === "super_admin" || currentUser.permissions.canApproveStudents) && (
                   <>
                     {selectedStudent.status !== "Reddedildi" && (
                       <button 
+                        disabled={statusUpdatingId === selectedStudent.id}
                         onClick={() => handleStudentStatus(selectedStudent.id, "Reddedildi")}
-                        className="px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-colors"
+                        className="px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
                       >
+                        {statusUpdatingId === selectedStudent.id ? <Loader2 className="w-4 h-4 animate-spin text-red-600" /> : null}
                         Reddet
                       </button>
                     )}
                     {selectedStudent.status !== "Onaylandı" && (
                       <button 
+                        disabled={statusUpdatingId === selectedStudent.id}
                         onClick={() => handleStudentStatus(selectedStudent.id, "Onaylandı")}
-                        className="px-6 py-2.5 bg-[#2E5A27] text-white rounded-xl font-bold text-sm hover:bg-[#386d30] shadow-lg transition-colors flex items-center gap-2"
+                        className="px-6 py-2.5 bg-[#2E5A27] text-white rounded-xl font-bold text-sm hover:bg-[#386d30] shadow-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
-                        <Check className="w-4 h-4" /> Onayla ve Vitrine Çıkar
+                        {statusUpdatingId === selectedStudent.id ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Check className="w-4 h-4" />}
+                        Onayla ve Vitrine Çıkar
                       </button>
                     )}
                   </>

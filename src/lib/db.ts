@@ -234,7 +234,19 @@ export async function updateStudent(id: string, updates: Partial<StudentRecord>)
   return students[index];
 }
 
-export async function approveStudentWithCredentials(id: string): Promise<{ student: StudentRecord; generatedCredentials: { username: string; password: string; emailText: string } } | null> {
+export async function approveStudentWithCredentials(id: string): Promise<{ 
+  student: StudentRecord; 
+  generatedCredentials: { 
+    username: string; 
+    password: string; 
+    emailText: string; 
+    emailContent: {
+      to: string;
+      subject: string;
+      body: string;
+    };
+  } 
+} | null> {
   const students = await getStudents();
   const index = students.findIndex((s) => s.id === id);
   if (index === -1) return null;
@@ -286,6 +298,11 @@ https://www.ubuntunetwork.com.tr
       username,
       password,
       emailText: welcomeEmailText,
+      emailContent: {
+        to: current.email || "",
+        subject: "Ubuntu Network - Başvurunuz Onaylandı! Giriş Bilgileriniz",
+        body: welcomeEmailText,
+      },
     },
   };
 }

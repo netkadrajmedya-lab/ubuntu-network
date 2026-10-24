@@ -426,33 +426,13 @@ export default function PremiumVitrin() {
             <p className="text-gray-300 text-base md:text-lg max-w-xl mx-auto mb-8 font-light leading-relaxed">
               Öğrenci başvuruları kabul edilmeye başlanmıştır. Yönetici onayından geçen ilk seçkin yetenekler doğrudan bu vitrinde işverenlere sergilenecektir.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex justify-center">
               <a 
                 href="/kayit" 
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-full font-bold shadow-lg hover:shadow-green-900/40 transition-all text-sm uppercase tracking-wider"
               >
                 Hemen Öğrenci Başvurusu Yap <ArrowRight className="w-4 h-4" />
               </a>
-              <a 
-                href="/admin" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold border border-white/20 transition-all text-sm uppercase tracking-wider"
-              >
-                Yönetici Paneline Git
-              </a>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10 text-center">
-              <div>
-                <div className="text-2xl font-extrabold text-[#D97725]">E-Devlet</div>
-                <div className="text-xs text-gray-400 mt-1">Onaylı Belgeler</div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold text-[#2E5A27]">Gizli</div>
-                <div className="text-xs text-gray-400 mt-1">İletişim Güvencesi</div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold text-white">Komisyon</div>
-                <div className="text-xs text-gray-400 mt-1">Yönetici Aracılığı</div>
-              </div>
             </div>
           </div>
         )}

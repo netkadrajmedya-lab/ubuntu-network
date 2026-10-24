@@ -34,6 +34,7 @@ export default function KayitPage() {
   const [customDept, setCustomDept] = useState("");
   const [classYear, setClassYear] = useState("");
   const [edevletDocName, setEdevletDocName] = useState("");
+  const [edevletDocUrl, setEdevletDocUrl] = useState("");
 
   const [category, setCategory] = useState("");
   const [skills, setSkills] = useState("");
@@ -195,6 +196,7 @@ export default function KayitPage() {
         email,
         photo,
         edevletDocName: edevletDocName || "ogrenci_belgesi.pdf",
+        edevletDocUrl: edevletDocUrl || "",
       };
 
       const res = await fetch("/api/students", {
@@ -499,11 +501,20 @@ export default function KayitPage() {
                       id="edevlet-doc"
                       required 
                       type="file" 
-                      accept=".pdf, image/jpeg, image/jpg" 
+                      accept=".pdf, image/jpeg, image/jpg, image/png" 
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
+                          if (file.size > 8 * 1024 * 1024) {
+                            alert("Öğrenci belgesi boyutu maksimum 8MB olmalıdır.");
+                            return;
+                          }
                           setEdevletDocName(file.name);
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setEdevletDocUrl(event.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
                         }
                       }}
                       className="flex-1 w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-white file:border-2 file:border-[#2E5A27] file:text-[#2E5A27] hover:file:bg-[#2E5A27]/5 transition-all cursor-pointer bg-white border border-gray-200 rounded-xl"
