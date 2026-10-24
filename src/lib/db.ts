@@ -541,26 +541,50 @@ export async function getSmtpSettings(): Promise<SmtpConfig> {
     return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
   }
 
+  let loaded: any = {};
   try {
     const data = await fs.readFile(SMTP_SETTINGS_FILE, "utf-8");
-    const parsed = JSON.parse(data);
-    globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG, ...parsed };
-    return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
+    loaded = JSON.parse(data);
   } catch {
     try {
       const seedData = await fs.readFile(SEED_SMTP_SETTINGS_FILE, "utf-8");
-      const parsed = JSON.parse(seedData);
-      globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG, ...parsed };
+      loaded = JSON.parse(seedData);
     } catch {
-      globalThis.__UBUNTU_SMTP_CONFIG__ = { ...DEFAULT_SMTP_CONFIG };
+      loaded = {};
     }
-    return { ...globalThis.__UBUNTU_SMTP_CONFIG__ };
   }
+
+  const finalConfig: SmtpConfig = {
+    host: typeof loaded.host === "string" ? loaded.host : DEFAULT_SMTP_CONFIG.host,
+    port: typeof loaded.port === "number" ? loaded.port : DEFAULT_SMTP_CONFIG.port,
+    secure: typeof loaded.secure === "boolean" ? loaded.secure : DEFAULT_SMTP_CONFIG.secure,
+    user: typeof loaded.user === "string" ? loaded.user : DEFAULT_SMTP_CONFIG.user,
+    pass: typeof loaded.pass === "string" ? loaded.pass : DEFAULT_SMTP_CONFIG.pass,
+    fromName: typeof loaded.fromName === "string" ? loaded.fromName : DEFAULT_SMTP_CONFIG.fromName,
+    fromEmail: typeof loaded.fromEmail === "string" ? loaded.fromEmail : DEFAULT_SMTP_CONFIG.fromEmail,
+    resendApiKey: typeof loaded.resendApiKey === "string" ? loaded.resendApiKey : DEFAULT_SMTP_CONFIG.resendApiKey,
+    provider: loaded.provider === "resend" ? "resend" : "smtp",
+    autoSendOnApproval: typeof loaded.autoSendOnApproval === "boolean" ? loaded.autoSendOnApproval : DEFAULT_SMTP_CONFIG.autoSendOnApproval,
+  };
+
+  globalThis.__UBUNTU_SMTP_CONFIG__ = finalConfig;
+  return { ...finalConfig };
 }
 
 export async function saveSmtpSettings(config: Partial<SmtpConfig>): Promise<SmtpConfig> {
   const current = await getSmtpSettings();
-  const updated: SmtpConfig = { ...current, ...config };
+  const updated: SmtpConfig = {
+    host: config.host !== undefined ? config.host : current.host,
+    port: config.port !== undefined ? config.port : current.port,
+    secure: config.secure !== undefined ? config.secure : current.secure,
+    user: config.user !== undefined ? config.user : current.user,
+    pass: config.pass !== undefined ? config.pass : current.pass,
+    fromName: config.fromName !== undefined ? config.fromName : current.fromName,
+    fromEmail: config.fromEmail !== undefined ? config.fromEmail : current.fromEmail,
+    resendApiKey: config.resendApiKey !== undefined ? config.resendApiKey : current.resendApiKey,
+    provider: config.provider !== undefined ? config.provider : current.provider,
+    autoSendOnApproval: config.autoSendOnApproval !== undefined ? config.autoSendOnApproval : current.autoSendOnApproval,
+  };
   globalThis.__UBUNTU_SMTP_CONFIG__ = updated;
 
   try {

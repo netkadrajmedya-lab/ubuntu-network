@@ -7,7 +7,7 @@ import {
   Building2, Phone, Mail, Trash2, ExternalLink, Lock, Loader2, 
   Sparkles, AlertCircle, RefreshCw, GraduationCap, MapPin, Globe, 
   KeyRound, UserPlus, ShieldAlert, CheckCircle2, Sliders, Edit3,
-  Copy, Send, Download, MessageCircle, Upload, FileText
+  Copy, Send, Download, MessageCircle, Upload, FileText, Save
 } from "lucide-react";
 
 interface CurrentAdmin {
@@ -68,6 +68,10 @@ interface ApprovalModalData {
       body: string;
     };
   };
+  emailDelivery?: {
+    success: boolean;
+    message: string;
+  };
 }
 
 interface Quote {
@@ -90,7 +94,28 @@ export default function AdminDashboard() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  const [activeTab, setActiveTab] = useState<"talepler" | "ogrenciler" | "vitrin" | "yoneticiler" | "guvenlik">("talepler");
+  const [activeTab, setActiveTab] = useState<"talepler" | "ogrenciler" | "vitrin" | "yoneticiler" | "guvenlik" | "eposta">("talepler");
+  const [smtpConfig, setSmtpConfig] = useState({
+    host: "",
+    port: 465,
+    secure: true,
+    user: "",
+    pass: "",
+    hasPass: false,
+    fromName: "Ubuntu Network",
+    fromEmail: "",
+    resendApiKey: "",
+    hasResendApiKey: false,
+    provider: "smtp" as "smtp" | "resend",
+    autoSendOnApproval: true,
+  });
+  const [smtpLoading, setSmtpLoading] = useState(false);
+  const [smtpMsg, setSmtpMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [testEmailTarget, setTestEmailTarget] = useState("");
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [testEmailMsg, setTestEmailMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [resendingMail, setResendingMail] = useState(false);
+  const [resendMailMsg, setResendMailMsg] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [adminUsers, setAdminUsers] = useState<CurrentAdmin[]>([]);
@@ -382,12 +407,105 @@ export default function AdminDashboard() {
         setApprovalModalData({
           student: data.student || updated,
           credentials: creds,
+          emailDelivery: data.emailDelivery,
         });
       }
     } catch (err: any) {
       alert("Hata: " + (err.message || "Öğrenci durumu güncellenemedi."));
     } finally {
       setStatusUpdatingId(null);
+    }
+  };
+
+  const fetchSmtpConfig = async () => {
+    try {
+      setSmtpLoading(true);
+      const res = await fetch("/api/admin/settings/email");
+      const data = await res.json();
+      if (data.success && data.config) {
+        setSmtpConfig(prev => ({ ...prev, ...data.config }));
+      }
+    } catch (err) {
+      console.error("SMTP config fetch error:", err);
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleSaveSmtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSmtpMsg(null);
+    try {
+      setSmtpLoading(true);
+      const res = await fetch("/api/admin/settings/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(smtpConfig),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSmtpMsg({ type: "success", text: "E-posta ayarları başarıyla kaydedildi!" });
+      } else {
+        setSmtpMsg({ type: "error", text: data.error || "Ayarlar kaydedilemedi." });
+      }
+    } catch (err: any) {
+      setSmtpMsg({ type: "error", text: err.message || "Bağlantı hatası oluştu." });
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailTarget) {
+      alert("Lütfen test e-postasının gönderileceği bir adres yazın.");
+      return;
+    }
+    setTestEmailMsg(null);
+    setTestEmailLoading(true);
+    try {
+      const res = await fetch("/api/admin/settings/email", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetEmail: testEmailTarget,
+          config: smtpConfig,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestEmailMsg({ type: "success", text: data.message || "Test e-postası başarıyla gönderildi!" });
+      } else {
+        setTestEmailMsg({ type: "error", text: data.message || data.error || "Test gönderimi başarısız oldu." });
+      }
+    } catch (err: any) {
+      setTestEmailMsg({ type: "error", text: err.message || "Bağlantı hatası." });
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
+  const handleResendApprovalEmail = async (student: Student, creds: any) => {
+    setResendingMail(true);
+    setResendMailMsg(null);
+    try {
+      const res = await fetch(`/api/students/${student.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "Onaylandı",
+          student,
+        }),
+      });
+      const data = await res.json();
+      if (data.emailDelivery?.success) {
+        setResendMailMsg("✓ E-posta başarıyla iletildi!");
+      } else {
+        setResendMailMsg("⚠️ " + (data.emailDelivery?.message || "E-posta gönderilemedi."));
+      }
+    } catch (err: any) {
+      setResendMailMsg("Hata: " + err.message);
+    } finally {
+      setResendingMail(false);
     }
   };
 
@@ -779,6 +897,13 @@ export default function AdminDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'guvenlik' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <Sliders className="w-4 h-4 shrink-0" /> Şifre & Güvenlik
+          </button>
+
+          <button 
+            onClick={() => { setActiveTab("eposta"); fetchSmtpConfig(); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'eposta' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <Mail className="w-4 h-4 shrink-0 text-[#D97725]" /> Otomatik E-Posta (SMTP)
           </button>
         </nav>
 
@@ -1393,6 +1518,283 @@ export default function AdminDashboard() {
               </motion.div>
             )}
 
+            {/* 6. SEKME: OTOMATİK E-POSTA & SMTP AYARLARI */}
+            {activeTab === 'eposta' && (
+              <motion.div key="eposta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">
+                      <Mail className="w-6 h-6 text-[#2E5A27]" /> Otomatik E-Posta & SMTP Yapılandırması
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Öğrenci başvurusu onaylandığı saniyede şifre ve giriş bilgilerini arka planda otomatik iletmek için e-posta sunucunuzu bağlayın.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3.5 py-1.5 rounded-full text-xs font-bold border flex items-center gap-2 ${
+                      smtpConfig.host && smtpConfig.user && smtpConfig.hasPass
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${smtpConfig.host && smtpConfig.user && smtpConfig.hasPass ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                      {smtpConfig.host && smtpConfig.user && smtpConfig.hasPass ? "SMTP Bağlantısı Hazır" : "Yapılandırma Bekleniyor"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* SMTP Ayar Formu */}
+                  <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+                    <h3 className="text-lg font-bold text-[#1A1A1A] mb-6 flex items-center gap-2 border-b pb-4">
+                      <Sliders className="w-5 h-5 text-[#D97725]" /> Sunucu İletişim Ayarları
+                    </h3>
+
+                    {smtpMsg && (
+                      <div className={`p-4 rounded-xl text-xs mb-6 flex items-center gap-2 ${
+                        smtpMsg.type === "success" ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-red-50 border border-red-200 text-red-700"
+                      }`}>
+                        {smtpMsg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                        <span>{smtpMsg.text}</span>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSaveSmtp} className="space-y-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">
+                          Gönderim Altyapısı
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setSmtpConfig({ ...smtpConfig, provider: "smtp" })}
+                            className={`p-3 rounded-xl border text-xs font-bold text-left transition-all ${
+                              smtpConfig.provider === "smtp"
+                                ? "border-[#2E5A27] bg-[#2E5A27]/5 text-[#2E5A27]"
+                                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className="block text-sm">Kurumsal SMTP Sunucusu</span>
+                            <span className="text-[11px] font-normal text-gray-500">cPanel, Yandex, Natro, Gmail vb.</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSmtpConfig({ ...smtpConfig, provider: "resend" })}
+                            className={`p-3 rounded-xl border text-xs font-bold text-left transition-all ${
+                              smtpConfig.provider === "resend"
+                                ? "border-[#D97725] bg-[#D97725]/5 text-[#D97725]"
+                                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className="block text-sm">Resend API</span>
+                            <span className="text-[11px] font-normal text-gray-500">Geliştirici e-posta servisi</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {smtpConfig.provider === "smtp" ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="sm:col-span-2">
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                SMTP Sunucu Adresi (Host) *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={smtpConfig.host}
+                                onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
+                                placeholder="Örn: mail.ubuntunetwork.com.tr veya smtp.gmail.com"
+                                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                Port *
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                value={smtpConfig.port}
+                                onChange={(e) => setSmtpConfig({ ...smtpConfig, port: Number(e.target.value) })}
+                                placeholder="465 veya 587"
+                                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                E-Posta / Kullanıcı Adı *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={smtpConfig.user}
+                                onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
+                                placeholder="Örn: bilgi@ubuntunetwork.com.tr"
+                                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                E-Posta Şifresi *
+                              </label>
+                              <input
+                                type="password"
+                                value={smtpConfig.pass}
+                                onChange={(e) => setSmtpConfig({ ...smtpConfig, pass: e.target.value })}
+                                placeholder={smtpConfig.hasPass ? "•••••••• (Kayıtlı Şifre)" : "Şifrenizi yazın"}
+                                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <label className="text-xs font-bold text-gray-700 block mb-1">
+                            Resend API Anahtarı (API Key) *
+                          </label>
+                          <input
+                            type="password"
+                            value={smtpConfig.resendApiKey}
+                            onChange={(e) => setSmtpConfig({ ...smtpConfig, resendApiKey: e.target.value })}
+                            placeholder={smtpConfig.hasResendApiKey ? "•••••••• (Kayıtlı Anahtar)" : "re_123456789..."}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D97725]"
+                          />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div>
+                          <label className="text-xs font-bold text-gray-700 block mb-1">
+                            Gönderen Adı
+                          </label>
+                          <input
+                            type="text"
+                            value={smtpConfig.fromName}
+                            onChange={(e) => setSmtpConfig({ ...smtpConfig, fromName: e.target.value })}
+                            placeholder="Örn: Ubuntu Network"
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-gray-700 block mb-1">
+                            Gönderen E-Posta Adresi
+                          </label>
+                          <input
+                            type="email"
+                            value={smtpConfig.fromEmail}
+                            onChange={(e) => setSmtpConfig({ ...smtpConfig, fromEmail: e.target.value })}
+                            placeholder="Örn: bilgi@ubuntunetwork.com.tr"
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={smtpConfig.autoSendOnApproval}
+                            onChange={(e) => setSmtpConfig({ ...smtpConfig, autoSendOnApproval: e.target.checked })}
+                            className="w-4 h-4 text-[#2E5A27] rounded focus:ring-[#2E5A27]"
+                          />
+                          <span className="text-xs font-bold text-gray-700">
+                            Öğrenci onaylandığı anda kurumsal hoş geldin e-postası ve şifresi otomatik olarak gönderilsin
+                          </span>
+                        </label>
+                      </div>
+
+                      <div className="pt-4 flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={smtpLoading}
+                          className="px-6 py-3 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center gap-2 disabled:opacity-70"
+                        >
+                          {smtpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          E-Posta Ayarlarını Kaydet
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Test ve Bilgilendirme Kartı */}
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                      <h4 className="font-bold text-[#1A1A1A] flex items-center gap-2 mb-3 text-sm">
+                        <Send className="w-4 h-4 text-[#2E5A27]" /> E-Posta Gönderim Testi
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                        Ayarlarınızı kaydettikten sonra aşağıdaki alana kendi e-posta adresinizi yazarak anında test maili gönderebilirsiniz.
+                      </p>
+
+                      <div className="space-y-3">
+                        <input
+                          type="email"
+                          value={testEmailTarget}
+                          onChange={(e) => setTestEmailTarget(e.target.value)}
+                          placeholder="Testin gideceği e-posta (Örn: sizin@mailiniz.com)"
+                          className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#2E5A27]"
+                        />
+
+                        {testEmailMsg && (
+                          <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                            testEmailMsg.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
+                          }`}>
+                            {testEmailMsg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" /> : <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />}
+                            <span>{testEmailMsg.text}</span>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleSendTestEmail}
+                          disabled={testEmailLoading}
+                          className="w-full py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        >
+                          {testEmailLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" /> Test Maili İletiliyor...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4" /> Test E-Postası Gönder
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAF9F6] rounded-2xl border border-gray-200 p-5 space-y-3 text-xs">
+                      <h5 className="font-bold text-[#1A1A1A] flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-[#D97725]" /> Yaygın Sunucu Bilgileri
+                      </h5>
+                      <div className="space-y-2 text-gray-600">
+                        <div className="p-2.5 bg-white rounded-xl border border-gray-200">
+                          <strong className="text-gray-900 block mb-0.5">Yandex Kurumsal:</strong>
+                          <span>Host: <code>smtp.yandex.com</code> • Port: <code>465</code> (SSL)</span>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-xl border border-gray-200">
+                          <strong className="text-gray-900 block mb-0.5">Gmail:</strong>
+                          <span>Host: <code>smtp.gmail.com</code> • Port: <code>465</code> (SSL) • <em>Google Uygulama Şifresi gereklidir.</em></span>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-xl border border-gray-200">
+                          <strong className="text-gray-900 block mb-0.5">cPanel / Turhost / Natro:</strong>
+                          <span>Host: <code>mail.ubuntunetwork.com.tr</code> • Port: <code>465</code> (SSL) veya <code>587</code></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
           </AnimatePresence>
 
         </div>
@@ -1874,43 +2276,111 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Otomatik E-Posta İletim Durumu */}
+              {approvalModalData.emailDelivery && (
+                <div className={`p-4 rounded-2xl mb-5 text-xs flex items-center justify-between gap-3 ${
+                  approvalModalData.emailDelivery.success
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+                    : "bg-amber-50 border border-amber-200 text-amber-900"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    {approvalModalData.emailDelivery.success ? (
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-bold text-sm">
+                        {approvalModalData.emailDelivery.success
+                          ? "✓ Kurumsal E-Posta Arka Planda Otomatik Gönderildi!"
+                          : "⚠️ Otomatik E-Posta Gönderilemedi"}
+                      </p>
+                      <p className="text-[11px] opacity-80 mt-0.5">
+                        {approvalModalData.emailDelivery.success
+                          ? `Öğrencinin kayıtlı adresi (${approvalModalData.credentials.emailContent.to}) üzerine giriş bilgileri başarıyla iletilmiştir.`
+                          : approvalModalData.emailDelivery.message}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!approvalModalData.emailDelivery.success && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApprovalModalData(null);
+                        setActiveTab("eposta");
+                        fetchSmtpConfig();
+                      }}
+                      className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs transition-colors shrink-0"
+                    >
+                      SMTP Ayarla
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {resendMailMsg && (
+                <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-xs mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>{resendMailMsg}</span>
+                </div>
+              )}
+
               {/* Kurumsal E-Posta Önizlemesi */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
-                    Öğrenciye Hazırlanan Kurumsal E-Posta
+                    Öğrenciye Hazırlanan Kurumsal E-Posta Metni
                   </h4>
                   <span className="text-[11px] text-gray-400">{approvalModalData.credentials.emailContent.to}</span>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 p-4 rounded-2xl text-xs font-mono text-gray-800 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto">
+                <div className="bg-gray-50 border border-gray-200 p-4 rounded-2xl text-xs font-mono text-gray-800 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
                   {approvalModalData.credentials.emailContent.body}
                 </div>
               </div>
 
-              {/* Aksiyon Butonları */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              {/* Hızlı Aksiyon Butonları */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(approvalModalData.credentials.emailContent.body, "mailbody")}
-                  className="flex-1 py-3 px-4 bg-[#2E5A27] text-white rounded-xl font-bold text-sm hover:bg-[#386d30] shadow flex items-center justify-center gap-2 transition-all"
+                  disabled={resendingMail}
+                  onClick={() => handleResendApprovalEmail(approvalModalData.student, approvalModalData.credentials)}
+                  className="py-3 px-3 bg-[#2E5A27] text-white rounded-xl font-bold text-xs hover:bg-[#386d30] shadow flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                  title="Sunucudan otomatik e-posta gönder"
                 >
-                  <Copy className="w-4 h-4" />
-                  {copiedField === "mailbody" ? "E-Posta Metni Kopyalandı!" : "E-Posta Metnini Kopyala"}
+                  {resendingMail ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Otomatik E-Posta Gönder
                 </button>
 
+                {approvalModalData.student.phone && (
+                  <a
+                    href={`https://api.whatsapp.com/send?phone=${approvalModalData.student.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(
+                      `Merhaba ${approvalModalData.student.fullName || approvalModalData.student.name},\n\nUbuntu Network yetenek ağına yapmış olduğunuz başvurunuz onaylanmıştır! 🎉\n\nÖğrenci Portalı Giriş Bilgileriniz:\n🔗 https://www.ubuntunetwork.com.tr/giris\n👤 Kullanıcı Adı: ${approvalModalData.credentials.username}\n🔑 Geçici Şifre: ${approvalModalData.credentials.password}\n\nUbuntu Network ailesine hoş geldiniz!`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-3 px-3 bg-[#25D366] text-white rounded-xl font-bold text-xs hover:bg-[#20ba59] shadow flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <MessageCircle className="w-4 h-4" /> WhatsApp ile Gönder
+                  </a>
+                )}
+
                 <a
-                  href={`mailto:${approvalModalData.credentials.emailContent.to}?subject=${encodeURIComponent(approvalModalData.credentials.emailContent.subject)}&body=${encodeURIComponent(approvalModalData.credentials.emailContent.body)}`}
-                  className="flex-1 py-3 px-4 bg-[#D97725] text-white rounded-xl font-bold text-sm hover:bg-[#c36a21] shadow flex items-center justify-center gap-2 transition-all"
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(approvalModalData.credentials.emailContent.to)}&su=${encodeURIComponent(approvalModalData.credentials.emailContent.subject)}&body=${encodeURIComponent(approvalModalData.credentials.emailContent.body)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 px-3 bg-red-600 text-white rounded-xl font-bold text-xs hover:bg-red-700 shadow flex items-center justify-center gap-1.5 transition-all"
                 >
-                  <Send className="w-4 h-4" /> E-Posta Olarak Gönder
+                  <Mail className="w-4 h-4" /> Gmail'de Aç
                 </a>
 
                 <button
                   type="button"
-                  onClick={() => setApprovalModalData(null)}
-                  className="py-3 px-5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold text-sm transition-colors"
+                  onClick={() => copyToClipboard(approvalModalData.credentials.emailContent.body, "mailbody")}
+                  className="py-3 px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
-                  Kapat
+                  <Copy className="w-4 h-4" />
+                  {copiedField === "mailbody" ? "Kopyalandı!" : "Metni Kopyala"}
                 </button>
               </div>
             </motion.div>
