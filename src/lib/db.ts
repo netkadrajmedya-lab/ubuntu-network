@@ -23,6 +23,7 @@ export interface StudentRecord {
   email: string;
   photo: string;
   edevletDocName?: string;
+  edevletDocUrl?: string;
   status: "Bekliyor" | "Onaylandı" | "Reddedildi";
   rating: number;
   createdAt: string;
