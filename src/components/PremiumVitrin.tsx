@@ -7,6 +7,7 @@ import {
   Filter, X, Send, Briefcase, Search, User, Loader2, ArrowRight 
 } from "lucide-react";
 import { UNIVERSITIES } from "@/data/constants";
+import { useLanguage } from "@/context/LanguageContext";
 
 const CATEGORIES = ["Tümü", "Yazılım & IT", "Yabancı Dil & Çeviri", "Tasarım & Kreatif", "Pazarlama", "Mühendislik"];
 
@@ -35,6 +36,7 @@ export interface StudentItem {
 }
 
 export default function PremiumVitrin() {
+  const { t } = useLanguage();
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Tümü");
@@ -184,13 +186,13 @@ export default function PremiumVitrin() {
         
         <div className="flex flex-col items-center text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
-            <Sparkles className="w-4 h-4" /> SEÇKİN PROFİLLER
+            <Sparkles className="w-4 h-4" /> {t("vitrin_badge")}
           </div>
           <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
-            Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D97725] to-[#2E5A27]">Vitrin</span>
+            {t("vitrin_title")}
           </h2>
           <p className="text-gray-400 text-lg md:text-xl max-w-3xl font-light">
-            E-Devlet onaylı, birden fazla dil bilen ve projenize değer katacak seçkin üniversite yetenekleri.
+            {t("vitrin_desc")}
           </p>
         </div>
 
@@ -206,7 +208,7 @@ export default function PremiumVitrin() {
                     activeTab === cat ? "bg-white text-[#0A0A0A]" : "text-gray-400 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  {cat}
+                  {cat === "Tümü" ? t("vitrin_tab_all") : cat}
                 </button>
               ))}
             </div>
@@ -216,7 +218,7 @@ export default function PremiumVitrin() {
                 showAdvancedFilters ? "bg-[#D97725] text-white" : "text-white bg-white/10 hover:bg-white/20"
               }`}
             >
-              <Filter className="w-4 h-4" /> Detaylı Filtre 
+              <Filter className="w-4 h-4" /> {t("vitrin_filter_btn")}
               <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${showAdvancedFilters ? 'rotate-90' : ''}`} />
             </button>
           </div>
@@ -402,7 +404,7 @@ export default function PremiumVitrin() {
                         }}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#0A0A0A] font-bold text-sm transform translate-y-2 opacity-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:bg-[#2E5A27] group-hover:text-white transition-all duration-300 shadow-lg"
                       >
-                        Teklif İste <ChevronRight className="w-4 h-4" />
+                        {t("vitrin_request_quote")} <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
                   </motion.div>
@@ -492,9 +494,9 @@ export default function PremiumVitrin() {
                   <div className="w-20 h-20 bg-[#2E5A27]/10 text-[#2E5A27] rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
-                  <h3 className="text-3xl font-bold text-[#1A1A1A] mb-4">Talebiniz Alındı!</h3>
+                  <h3 className="text-3xl font-bold text-[#1A1A1A] mb-4">{t("vitrin_modal_success")}</h3>
                   <p className="text-gray-600 text-lg leading-relaxed">
-                    <strong>{quoteStudent.fullName || quoteStudent.name}</strong> isimli yetenek için oluşturduğunuz teklif talebiniz yöneticimize iletildi. En kısa sürede bütçe ve uygunluk durumuyla ilgili sizinle irtibata geçilecektir.
+                    {t("vitrin_modal_success_desc")}
                   </p>
                 </div>
               ) : (
@@ -520,7 +522,7 @@ export default function PremiumVitrin() {
                   </div>
 
                   <div className="w-full md:w-3/5 p-8">
-                    <h4 className="text-2xl font-bold text-[#1A1A1A] mb-6 border-b pb-4">İşveren Talep Formu</h4>
+                    <h4 className="text-2xl font-bold text-[#1A1A1A] mb-6 border-b pb-4">{t("vitrin_modal_title")}</h4>
                     
                     {quoteError && (
                       <div className="p-3 mb-4 bg-red-50 text-red-600 rounded-xl text-xs font-semibold">
@@ -530,7 +532,7 @@ export default function PremiumVitrin() {
 
                     <form onSubmit={handleQuoteSubmit} className="space-y-4">
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Şirketinizin Adı</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("vitrin_modal_company")}</label>
                         <input 
                           required 
                           type="text" 
@@ -542,7 +544,7 @@ export default function PremiumVitrin() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Yetkili Kişi</label>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("vitrin_modal_contact")}</label>
                           <input 
                             required 
                             type="text" 
@@ -553,7 +555,7 @@ export default function PremiumVitrin() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Telefon Numaranız</label>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("vitrin_modal_phone")}</label>
                           <input 
                             required 
                             type="tel" 
@@ -565,14 +567,14 @@ export default function PremiumVitrin() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Proje / İş Detayı</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("vitrin_modal_desc_label")}</label>
                         <textarea 
                           required 
                           rows={3} 
                           value={projectDesc}
                           onChange={(e) => setProjectDesc(e.target.value)}
                           className="w-full mt-1 border-2 border-gray-200 rounded-xl focus:border-[#2E5A27] bg-gray-50 p-3 focus:outline-none transition-colors resize-none text-sm" 
-                          placeholder="Öğrenciden beklentiniz nedir? Süre ve iş kapsamını yazın..."
+                          placeholder="Öğrenciden beklentiniz nedir? Süre ve iş kapsamını yazın..." 
                         ></textarea>
                       </div>
                       <div>

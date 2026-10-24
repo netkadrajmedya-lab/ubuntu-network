@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 
 export interface StudentRecord {
   id: string;
@@ -61,10 +62,33 @@ export interface AdminUserRecord {
   createdAt: string;
 }
 
-const STORAGE_DIR = path.join(process.cwd(), "src", "data", "storage");
+// Vercel serverless ortamında /var/task dizini salt-okunurdur (read-only).
+// Yazılabilir tek dizin /tmp (os.tmpdir()) dizinidir.
+const isServerless = 
+  process.env.VERCEL === "1" || 
+  Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) || 
+  process.cwd().startsWith("/var/task");
+
+const STORAGE_DIR = isServerless
+  ? path.join(os.tmpdir(), "ubuntu_storage")
+  : path.join(process.cwd(), "src", "data", "storage");
+
+const SEED_STORAGE_DIR = path.join(process.cwd(), "src", "data", "storage");
+
 const STUDENTS_FILE = path.join(STORAGE_DIR, "students.json");
 const QUOTES_FILE = path.join(STORAGE_DIR, "quotes.json");
 const ADMINS_FILE = path.join(STORAGE_DIR, "admins.json");
+
+const SEED_STUDENTS_FILE = path.join(SEED_STORAGE_DIR, "students.json");
+const SEED_QUOTES_FILE = path.join(SEED_STORAGE_DIR, "quotes.json");
+const SEED_ADMINS_FILE = path.join(SEED_STORAGE_DIR, "admins.json");
+
+// Sunucusuz fonksiyonlar arasında bellekte canlı tutulan küresel önbellek (Memory Cache)
+declare global {
+  var __UBUNTU_STUDENTS__: StudentRecord[] | undefined;
+  var __UBUNTU_QUOTES__: QuoteRecord[] | undefined;
+  var __UBUNTU_ADMINS__: AdminUserRecord[] | undefined;
+}
 
 const DEFAULT_ADMIN: AdminUserRecord = {
   id: "admin_super_1",
@@ -86,41 +110,86 @@ const DEFAULT_ADMIN: AdminUserRecord = {
 async function ensureStorage() {
   try {
     await fs.mkdir(STORAGE_DIR, { recursive: true });
-    try {
-      await fs.access(STUDENTS_FILE);
-    } catch {
-      await fs.writeFile(STUDENTS_FILE, JSON.stringify([], null, 2), "utf-8");
-    }
-    try {
-      await fs.access(QUOTES_FILE);
-    } catch {
-      await fs.writeFile(QUOTES_FILE, JSON.stringify([], null, 2), "utf-8");
-    }
-    try {
-      await fs.access(ADMINS_FILE);
-    } catch {
-      await fs.writeFile(ADMINS_FILE, JSON.stringify([DEFAULT_ADMIN], null, 2), "utf-8");
-    }
   } catch (err) {
-    console.error("Storage initialization error:", err);
+    // Salt-okunur uyarısı alınırsa çökmeden devam et
+  }
+
+  // 1. ÖĞRENCİLER
+  if (!globalThis.__UBUNTU_STUDENTS__) {
+    try {
+      const data = await fs.readFile(STUDENTS_FILE, "utf-8");
+      globalThis.__UBUNTU_STUDENTS__ = JSON.parse(data);
+    } catch {
+      try {
+        const seedData = await fs.readFile(SEED_STUDENTS_FILE, "utf-8");
+        globalThis.__UBUNTU_STUDENTS__ = JSON.parse(seedData);
+      } catch {
+        globalThis.__UBUNTU_STUDENTS__ = [];
+      }
+      try {
+        await fs.writeFile(STUDENTS_FILE, JSON.stringify(globalThis.__UBUNTU_STUDENTS__, null, 2), "utf-8");
+      } catch (e) {
+        // Dosya yazılamasa bile bellekte tutulmaya devam eder
+      }
+    }
+  }
+
+  // 2. TALEPLER / İŞVEREN ANLAŞMALARI
+  if (!globalThis.__UBUNTU_QUOTES__) {
+    try {
+      const data = await fs.readFile(QUOTES_FILE, "utf-8");
+      globalThis.__UBUNTU_QUOTES__ = JSON.parse(data);
+    } catch {
+      try {
+        const seedData = await fs.readFile(SEED_QUOTES_FILE, "utf-8");
+        globalThis.__UBUNTU_QUOTES__ = JSON.parse(seedData);
+      } catch {
+        globalThis.__UBUNTU_QUOTES__ = [];
+      }
+      try {
+        await fs.writeFile(QUOTES_FILE, JSON.stringify(globalThis.__UBUNTU_QUOTES__, null, 2), "utf-8");
+      } catch (e) {}
+    }
+  }
+
+  // 3. YÖNETİCİLER
+  if (!globalThis.__UBUNTU_ADMINS__) {
+    try {
+      const data = await fs.readFile(ADMINS_FILE, "utf-8");
+      const list = JSON.parse(data);
+      globalThis.__UBUNTU_ADMINS__ = list.length > 0 ? list : [DEFAULT_ADMIN];
+    } catch {
+      try {
+        const seedData = await fs.readFile(SEED_ADMINS_FILE, "utf-8");
+        const list = JSON.parse(seedData);
+        globalThis.__UBUNTU_ADMINS__ = list.length > 0 ? list : [DEFAULT_ADMIN];
+      } catch {
+        globalThis.__UBUNTU_ADMINS__ = [DEFAULT_ADMIN];
+      }
+      try {
+        await fs.writeFile(ADMINS_FILE, JSON.stringify(globalThis.__UBUNTU_ADMINS__, null, 2), "utf-8");
+      } catch (e) {}
+    }
   }
 }
 
 // STUDENTS OPERATIONS
 export async function getStudents(): Promise<StudentRecord[]> {
   await ensureStorage();
-  try {
-    const data = await fs.readFile(STUDENTS_FILE, "utf-8");
-    return JSON.parse(data) || [];
-  } catch (err) {
-    console.error("Error reading students:", err);
-    return [];
+  if (globalThis.__UBUNTU_STUDENTS__) {
+    return [...globalThis.__UBUNTU_STUDENTS__];
   }
+  return [];
 }
 
 export async function saveStudents(students: StudentRecord[]): Promise<void> {
-  await ensureStorage();
-  await fs.writeFile(STUDENTS_FILE, JSON.stringify(students, null, 2), "utf-8");
+  globalThis.__UBUNTU_STUDENTS__ = [...students];
+  try {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    await fs.writeFile(STUDENTS_FILE, JSON.stringify(students, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("Storage write fallback to memory:", err);
+  }
 }
 
 function slugify(text: string): string {
@@ -244,18 +313,20 @@ export async function deleteStudent(id: string): Promise<boolean> {
 // QUOTES OPERATIONS
 export async function getQuotes(): Promise<QuoteRecord[]> {
   await ensureStorage();
-  try {
-    const data = await fs.readFile(QUOTES_FILE, "utf-8");
-    return JSON.parse(data) || [];
-  } catch (err) {
-    console.error("Error reading quotes:", err);
-    return [];
+  if (globalThis.__UBUNTU_QUOTES__) {
+    return [...globalThis.__UBUNTU_QUOTES__];
   }
+  return [];
 }
 
 export async function saveQuotes(quotes: QuoteRecord[]): Promise<void> {
-  await ensureStorage();
-  await fs.writeFile(QUOTES_FILE, JSON.stringify(quotes, null, 2), "utf-8");
+  globalThis.__UBUNTU_QUOTES__ = [...quotes];
+  try {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    await fs.writeFile(QUOTES_FILE, JSON.stringify(quotes, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("Storage write fallback to memory:", err);
+  }
 }
 
 export async function getStudentDeals(studentId: string, studentName?: string): Promise<QuoteRecord[]> {
@@ -302,23 +373,20 @@ export async function deleteQuote(id: string): Promise<boolean> {
 // ADMIN USERS OPERATIONS
 export async function getAdminUsers(): Promise<AdminUserRecord[]> {
   await ensureStorage();
-  try {
-    const data = await fs.readFile(ADMINS_FILE, "utf-8");
-    const list = JSON.parse(data) || [];
-    if (list.length === 0) {
-      await fs.writeFile(ADMINS_FILE, JSON.stringify([DEFAULT_ADMIN], null, 2), "utf-8");
-      return [DEFAULT_ADMIN];
-    }
-    return list;
-  } catch (err) {
-    console.error("Error reading admin users:", err);
-    return [DEFAULT_ADMIN];
+  if (globalThis.__UBUNTU_ADMINS__ && globalThis.__UBUNTU_ADMINS__.length > 0) {
+    return [...globalThis.__UBUNTU_ADMINS__];
   }
+  return [DEFAULT_ADMIN];
 }
 
 export async function saveAdminUsers(admins: AdminUserRecord[]): Promise<void> {
-  await ensureStorage();
-  await fs.writeFile(ADMINS_FILE, JSON.stringify(admins, null, 2), "utf-8");
+  globalThis.__UBUNTU_ADMINS__ = [...admins];
+  try {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    await fs.writeFile(ADMINS_FILE, JSON.stringify(admins, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("Storage write fallback to memory:", err);
+  }
 }
 
 export async function findAdminByCredentials(username: string, password: string): Promise<AdminUserRecord | null> {
