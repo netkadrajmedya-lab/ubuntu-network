@@ -554,7 +554,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "مستوى متقدم (C2)",
     founder_cred_uni: "خريج كلية الإلهيات بجامعة بورصة أولوداغ",
     founder_cred_pres: "رئيس سابق لرابطة طلاب إفريقيا في بورصة",
-    founder_photo_note: "* يمكنك تحديث هذه الصورة بسهولة عبر وضع public/founder.jpg داخل مجلد المشروع.",
   },
 
   sw: {
@@ -662,7 +661,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     founder_badge_c2: "Kiwango cha Juu (C2)",
     founder_cred_uni: "Mhitimu wa Kitivo cha Theolojia, Chuo Kikuu cha Bursa Uludağ",
     founder_cred_pres: "Rais wa Zamani wa Jumuiya ya Wanafunzi wa Kiafrika wa Bursa",
-    founder_photo_note: "* Unaweza kusasisha picha hii kwa kuongeza public/founder.jpg kwenye folda yako.",
   },
 };
 
