@@ -346,10 +346,6 @@ export default function GirisPage() {
                     )}
                   </button>
                 </form>
-
-                <div className="mt-8 pt-5 border-t border-white/10 text-center text-xs text-gray-500">
-                  Varsayılan Süper Yönetici: <code className="text-[#D97725] font-bold">admin</code> / <code className="text-[#D97725] font-bold">ubuntu2026</code>
-                </div>
               </motion.div>
             )}
 

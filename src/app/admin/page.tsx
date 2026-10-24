@@ -553,12 +553,6 @@ export default function AdminDashboard() {
               {loginLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sisteme Giriş Yap"}
             </button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-white/10 text-center">
-            <p className="text-gray-500 text-xs">
-              İlk Kurulum Hesabı: <code className="text-[#D97725] font-bold">admin</code> / <code className="text-[#D97725] font-bold">ubuntu2026</code>
-            </p>
-          </div>
         </motion.div>
       </div>
     );
