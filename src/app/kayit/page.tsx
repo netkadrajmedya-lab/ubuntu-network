@@ -316,14 +316,14 @@ export default function KayitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pt-32 flex flex-col justify-between">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 w-full">
+    <div className="min-h-screen bg-[#FAF9F6] pt-28 sm:pt-32 flex flex-col justify-between">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 pb-16 sm:pb-24 w-full">
         
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-extrabold text-[#1A1A1A] mb-4 tracking-tight"
+            className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1A1A1A] mb-3 sm:mb-4 tracking-tight"
           >
             Premium Vitrin&apos;e Katıl
           </motion.h1>
@@ -331,7 +331,7 @@ export default function KayitPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-gray-600 max-w-2xl mx-auto"
+            className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto"
           >
             Yeteneklerinizi prestijli projeler ve kurumsal işverenlerle buluşturun. Aşağıdaki formu eksiksiz doldurarak değerlendirme sürecine katılın.
           </motion.p>
@@ -345,7 +345,7 @@ export default function KayitPage() {
         >
           <div className="h-2 w-full bg-gradient-to-r from-[#2E5A27] to-[#D97725]"></div>
           
-          <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-12">
+          <form onSubmit={handleSubmit} className="p-5 sm:p-8 md:p-12 space-y-8 sm:space-y-12">
             
             {submitError && (
               <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
@@ -356,15 +356,15 @@ export default function KayitPage() {
 
             {/* Fotoğraf Yükleme Bölümü */}
             <section id="photo-section">
-              <h3 className="text-xl font-bold text-[#1A1A1A] mb-6 flex items-center gap-2 border-b pb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-4 sm:mb-6 flex items-center gap-2 border-b pb-3 sm:pb-4">
                 <ImageIcon className="w-5 h-5 text-[#2E5A27]" /> Profil Fotoğrafı (Vesikalık Tarzı)
               </h3>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-xs sm:text-sm text-gray-500 mb-5 sm:mb-6 leading-relaxed">
                 İşverenlerin sizi daha iyi tanıması için yüzünüzün net çıktığı, kurumsal ve şık bir fotoğraf yükleyin veya kameranızla çekin. (Maks. 2MB)
               </p>
 
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="w-40 h-40 shrink-0 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group shadow-inner">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start">
+                <div className="w-36 h-36 sm:w-40 sm:h-40 shrink-0 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group shadow-inner mx-auto sm:mx-0">
                   {photo ? (
                     <>
                       <img src={photo} alt="Profil Önizleme" className="w-full h-full object-cover" />
@@ -383,25 +383,25 @@ export default function KayitPage() {
 
                 <div className="flex-1 w-full">
                   {!isCameraOpen ? (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex gap-4">
-                        <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 bg-white border-2 border-[#2E5A27] text-[#2E5A27] py-3 px-4 rounded-xl font-bold hover:bg-[#2E5A27]/5 transition-colors">
-                          <Upload className="w-5 h-5" /> Dosya Seç (Maks 2MB)
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 bg-white border-2 border-[#2E5A27] text-[#2E5A27] py-3 px-4 rounded-xl font-bold hover:bg-[#2E5A27]/5 transition-colors text-sm">
+                          <Upload className="w-4 h-4 sm:w-5 sm:h-5" /> Dosya Seç (Maks 2MB)
                           <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                         </label>
                         <button 
                           type="button" 
                           onClick={startCamera}
                           disabled={cameraLoading}
-                          className="flex-1 flex items-center justify-center gap-2 bg-[#D97725] text-white py-3 px-4 rounded-xl font-bold hover:bg-[#c36a21] transition-colors disabled:opacity-60 shadow-sm"
+                          className="flex-1 flex items-center justify-center gap-2 bg-[#D97725] text-white py-3 px-4 rounded-xl font-bold hover:bg-[#c36a21] transition-colors disabled:opacity-60 shadow-sm text-sm"
                         >
                           {cameraLoading ? (
                             <>
-                              <Loader2 className="w-5 h-5 animate-spin" /> Kamera Başlatılıyor...
+                              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> Kamera Başlatılıyor...
                             </>
                           ) : (
                             <>
-                              <Camera className="w-5 h-5" /> Kamerayla Çek
+                              <Camera className="w-4 h-4 sm:w-5 sm:h-5" /> Kamerayla Çek
                             </>
                           )}
                         </button>
@@ -589,9 +589,9 @@ export default function KayitPage() {
 
                 <div className="space-y-2 md:col-span-2 mt-4">
                   <label className="text-sm font-semibold text-gray-700">Sınıf</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 sm:gap-3">
                     {['Hazırlık', '1. Sınıf', '2. Sınıf', '3. Sınıf', '4. Sınıf', '5. Sınıf', '6. Sınıf'].map((cls) => (
-                      <label key={cls} className={`flex items-center justify-center px-3 py-3 border rounded-xl cursor-pointer transition-all ${classYear === cls ? 'bg-[#2E5A27] text-white border-[#2E5A27] font-bold shadow-md' : 'border-gray-200 hover:bg-[#2E5A27]/5 hover:border-[#2E5A27]'}`}>
+                      <label key={cls} className={`flex items-center justify-center px-2 py-2.5 sm:px-3 sm:py-3 border rounded-xl cursor-pointer transition-all ${classYear === cls ? 'bg-[#2E5A27] text-white border-[#2E5A27] font-bold shadow-md' : 'border-gray-200 hover:bg-[#2E5A27]/5 hover:border-[#2E5A27]'}`}>
                         <input 
                           type="radio" 
                           name="sinif" 
@@ -601,13 +601,13 @@ export default function KayitPage() {
                           className="sr-only" 
                           required 
                         />
-                        <span className="text-sm font-medium text-center">{cls}</span>
+                        <span className="text-xs sm:text-sm font-medium text-center">{cls}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-2 md:col-span-2 mt-6 p-6 bg-[#2E5A27]/5 border-2 border-dashed border-[#2E5A27]/30 rounded-2xl">
+                <div className="space-y-2 md:col-span-2 mt-6 p-4 sm:p-6 bg-[#2E5A27]/5 border-2 border-dashed border-[#2E5A27]/30 rounded-2xl">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
                     <FileCheck className="w-5 h-5 text-[#2E5A27]" /> 
                     E-Devlet Öğrenci Belgesi <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Zorunlu</span>
@@ -615,7 +615,7 @@ export default function KayitPage() {
                   <p className="text-xs text-gray-500 mb-4 leading-relaxed">
                     Güvenli ve doğrulanmış bir platform olmamız için lütfen <strong>e-Devlet</strong> üzerinden alınmış <strong>güncel tarihli</strong> öğrenci belgenizi PDF veya JPEG formatında yükleyiniz. (Bu belge sadece yönetici tarafından teyit amaçlı kullanılacak olup, hiçbir yerde yayınlanmaz.)
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
                     <input 
                       id="edevlet-doc"
                       required 
@@ -636,13 +636,13 @@ export default function KayitPage() {
                           reader.readAsDataURL(file);
                         }
                       }}
-                      className="flex-1 w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-white file:border-2 file:border-[#2E5A27] file:text-[#2E5A27] hover:file:bg-[#2E5A27]/5 transition-all cursor-pointer bg-white border border-gray-200 rounded-xl"
+                      className="flex-1 w-full text-xs sm:text-sm text-gray-500 file:mr-3 sm:file:mr-4 file:py-2.5 sm:file:py-3 file:px-4 sm:file:px-6 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-white file:border-2 file:border-[#2E5A27] file:text-[#2E5A27] hover:file:bg-[#2E5A27]/5 transition-all cursor-pointer bg-white border border-gray-200 rounded-xl"
                     />
                     <button 
                       id="doc-btn"
                       type="button"
                       onClick={() => document.getElementById('edevlet-doc')?.click()}
-                      className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 shadow-md text-white ${edevletDocName ? 'bg-green-600 hover:bg-green-700' : 'bg-[#D97725] hover:bg-[#c36a21]'}`}
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 shadow-md text-white text-sm ${edevletDocName ? 'bg-green-600 hover:bg-green-700' : 'bg-[#D97725] hover:bg-[#c36a21]'}`}
                     >
                       {edevletDocName ? (
                         <>

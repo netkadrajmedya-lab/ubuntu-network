@@ -177,35 +177,35 @@ export default function PremiumVitrin() {
   };
 
   return (
-    <section id="vitrin" className="py-24 bg-[#0A0A0A] relative overflow-hidden">
+    <section id="vitrin" className="py-16 sm:py-24 bg-[#0A0A0A] relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-[#2E5A27] rounded-full blur-[200px] opacity-20 pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-[#D97725] rounded-full blur-[200px] opacity-15 pointer-events-none"></div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none"></div>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="flex flex-col items-center text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
-            <Sparkles className="w-4 h-4" /> {t("vitrin_badge")}
+        <div className="flex flex-col items-center text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-4 sm:mb-6 backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t("vitrin_badge")}
           </div>
-          <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 sm:mb-6 tracking-tight">
             {t("vitrin_title")}
           </h2>
-          <p className="text-gray-400 text-lg md:text-xl max-w-3xl font-light">
+          <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-3xl font-light">
             {t("vitrin_desc")}
           </p>
         </div>
 
         {/* Gelişmiş Filtreleme Alanı */}
-        <div className="mb-12 bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md max-w-5xl mx-auto transition-all">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-2">
-            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+        <div className="mb-8 sm:mb-12 bg-white/5 border border-white/10 rounded-3xl p-4 sm:p-6 backdrop-blur-md max-w-5xl mx-auto transition-all">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between mb-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveTab(cat)}
-                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-                    activeTab === cat ? "bg-white text-[#0A0A0A]" : "text-gray-400 hover:text-white hover:bg-white/10"
+                  className={`px-3.5 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
+                    activeTab === cat ? "bg-white text-[#0A0A0A] shadow" : "text-gray-400 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {cat === "Tümü" ? t("vitrin_tab_all") : cat}
@@ -214,7 +214,7 @@ export default function PremiumVitrin() {
             </div>
             <button 
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-2 text-sm font-bold px-5 py-2 rounded-full transition-all ml-auto ${
+              className={`flex items-center justify-center gap-2 text-xs sm:text-sm font-bold px-4 sm:px-5 py-2.5 rounded-full transition-all w-full sm:w-auto ${
                 showAdvancedFilters ? "bg-[#D97725] text-white" : "text-white bg-white/10 hover:bg-white/20"
               }`}
             >
@@ -231,7 +231,7 @@ export default function PremiumVitrin() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="pt-6 mt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="pt-5 mt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
                   <div className="space-y-2">
                     <label className="text-xs text-gray-400 font-bold uppercase tracking-wider">Yabancı Dil</label>
                     <select 
@@ -465,32 +465,33 @@ export default function PremiumVitrin() {
         {quoteStudent && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative"
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl relative my-auto"
             >
               <button 
                 onClick={() => setQuoteStudent(null)} 
-                className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-9 h-9 sm:w-10 sm:h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Kapat"
               >
                 <X className="w-5 h-5 text-[#1A1A1A]" />
               </button>
 
               {quoteSubmitted ? (
-                <div className="p-16 text-center">
-                  <div className="w-20 h-20 bg-[#2E5A27]/10 text-[#2E5A27] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="w-10 h-10" />
+                <div className="p-8 sm:p-16 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2E5A27]/10 text-[#2E5A27] rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+                    <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
                   </div>
-                  <h3 className="text-3xl font-bold text-[#1A1A1A] mb-4">{t("vitrin_modal_success")}</h3>
-                  <p className="text-gray-600 text-lg leading-relaxed">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3 sm:mb-4">{t("vitrin_modal_success")}</h3>
+                  <p className="text-gray-600 text-sm sm:text-lg leading-relaxed">
                     {t("vitrin_modal_success_desc")}
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col md:flex-row">
-                  <div className="w-full md:w-2/5 bg-[#1A1A1A] relative p-8 flex flex-col justify-end min-h-[220px]">
+                  <div className="w-full md:w-2/5 bg-[#1A1A1A] relative p-6 sm:p-8 flex flex-col justify-end min-h-[160px] sm:min-h-[220px]">
                     {(quoteStudent.photo || quoteStudent.image) ? (
                       <img 
                         src={quoteStudent.photo || quoteStudent.image} 
@@ -501,8 +502,8 @@ export default function PremiumVitrin() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
                     <div className="relative z-10">
                       <span className="bg-[#D97725] text-white text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider mb-2 inline-block">Talep Edilen</span>
-                      <h3 className="text-2xl font-bold text-white mb-1">{quoteStudent.fullName || quoteStudent.name}</h3>
-                      <p className="text-gray-300 text-sm mb-4">{quoteStudent.category}</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{quoteStudent.fullName || quoteStudent.name}</h3>
+                      <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">{quoteStudent.category}</p>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs text-gray-400"><MapPin className="w-3 h-3" /> {quoteStudent.city}</div>
                         <div className="flex items-center gap-2 text-xs text-gray-400"><Briefcase className="w-3 h-3" /> {quoteStudent.workType}</div>
@@ -510,8 +511,8 @@ export default function PremiumVitrin() {
                     </div>
                   </div>
 
-                  <div className="w-full md:w-3/5 p-8">
-                    <h4 className="text-2xl font-bold text-[#1A1A1A] mb-6 border-b pb-4">{t("vitrin_modal_title")}</h4>
+                  <div className="w-full md:w-3/5 p-5 sm:p-8">
+                    <h4 className="text-xl sm:text-2xl font-bold text-[#1A1A1A] mb-4 sm:mb-6 border-b pb-3 sm:pb-4">{t("vitrin_modal_title")}</h4>
                     
                     {quoteError && (
                       <div className="p-3 mb-4 bg-red-50 text-red-600 rounded-xl text-xs font-semibold">
@@ -527,11 +528,11 @@ export default function PremiumVitrin() {
                           type="text" 
                           value={companyName}
                           onChange={(e) => setCompanyName(e.target.value)}
-                          className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors" 
+                          className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors text-sm" 
                           placeholder="Örn: ABC Teknoloji A.Ş." 
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("vitrin_modal_contact")}</label>
                           <input 
@@ -539,7 +540,7 @@ export default function PremiumVitrin() {
                             type="text" 
                             value={contactName}
                             onChange={(e) => setContactName(e.target.value)}
-                            className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors" 
+                            className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors text-sm" 
                             placeholder="Adınız Soyadınız" 
                           />
                         </div>
@@ -550,7 +551,7 @@ export default function PremiumVitrin() {
                             type="tel" 
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors" 
+                            className="w-full mt-1 border-b-2 border-gray-200 focus:border-[#2E5A27] bg-transparent py-2 px-1 focus:outline-none transition-colors text-sm" 
                             placeholder="05XX XXX XX XX" 
                           />
                         </div>

@@ -204,16 +204,16 @@ export default function OgrenciPanelPage() {
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] flex flex-col">
       {/* Üst Bar */}
       <header className="bg-[#1A1A1A] text-white border-b border-white/10 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <Globe className="w-7 h-7 text-[#2E5A27] group-hover:text-[#D97725] transition-colors" />
+            <Globe className="w-6 h-6 sm:w-7 sm:h-7 text-[#2E5A27] group-hover:text-[#D97725] transition-colors" />
             <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-widest leading-none">UBUNTU</span>
-              <span className="text-[9px] tracking-widest text-[#D97725] font-bold mt-0.5">ÖĞRENCİ PORTALI</span>
+              <span className="font-extrabold text-lg sm:text-xl tracking-widest leading-none">UBUNTU</span>
+              <span className="text-[8px] sm:text-[9px] tracking-widest text-[#D97725] font-bold mt-0.5">ÖĞRENCİ PORTALI</span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link 
               href="/#vitrin" 
               target="_blank"
@@ -222,8 +222,8 @@ export default function OgrenciPanelPage() {
               Vitrindeki Kartım <ExternalLink className="w-3.5 h-3.5" />
             </Link>
 
-            <div className="flex items-center gap-3 pl-3 border-l border-white/10">
-              <div className="w-9 h-9 rounded-xl bg-[#2E5A27] text-white font-bold flex items-center justify-center text-sm">
+            <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-white/10">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#2E5A27] text-white font-bold flex items-center justify-center text-xs sm:text-sm">
                 {student.photo ? (
                   <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover rounded-xl" />
                 ) : (
@@ -240,6 +240,7 @@ export default function OgrenciPanelPage() {
               onClick={handleLogout}
               className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
               title="Çıkış Yap"
+              aria-label="Çıkış Yap"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -248,33 +249,33 @@ export default function OgrenciPanelPage() {
       </header>
 
       {/* Profil Banner */}
-      <div className="bg-[#111111] text-white pt-10 pb-16 px-4 relative overflow-hidden">
+      <div className="bg-[#111111] text-white pt-8 sm:pt-10 pb-12 sm:pb-16 px-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#2E5A27] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gray-800 border-2 border-white/20 overflow-hidden shrink-0 shadow-xl">
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gray-800 border-2 border-white/20 overflow-hidden shrink-0 shadow-xl">
                 {student.photo ? (
                   <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-extrabold text-gray-500">
+                  <div className="w-full h-full flex items-center justify-center text-2xl sm:text-3xl font-extrabold text-gray-500">
                     {student.fullName[0]}
                   </div>
                 )}
               </div>
 
               <div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{student.fullName}</h1>
-                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">{student.fullName}</h1>
+                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Onaylı & Yayında
                   </span>
                 </div>
 
-                <p className="text-sm text-[#D97725] font-bold mt-1">{student.category}</p>
-                <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-400">
+                <p className="text-xs sm:text-sm text-[#D97725] font-bold mt-1">{student.category}</p>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-gray-400">
                   <span className="flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5 text-gray-400" /> {student.uni} • {student.dept} ({student.year})</span>
                   <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-gray-400" /> {student.city}</span>
                 </div>
@@ -282,26 +283,26 @@ export default function OgrenciPanelPage() {
             </div>
 
             {/* Hızlı İstatistik Rozetleri */}
-            <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 text-center min-w-[100px]">
-                <div className="flex items-center justify-center gap-1 text-[#D97725] font-bold text-lg">
-                  <Star className="w-4 h-4 fill-current" /> {student.rating || 5.0}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
+                <div className="flex items-center justify-center gap-1 text-[#D97725] font-bold text-base sm:text-lg">
+                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> {student.rating || 5.0}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Puan</div>
+                <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Puan</div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 text-center min-w-[100px]">
-                <div className="text-white font-extrabold text-lg">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
+                <div className="text-white font-extrabold text-base sm:text-lg">
                   {deals.length}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Anlaşma</div>
+                <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Anlaşma</div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 text-center min-w-[100px]">
-                <div className="text-emerald-400 font-extrabold text-lg">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
+                <div className="text-emerald-400 font-extrabold text-xs sm:text-base">
                   E-Devlet
                 </div>
-                <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Doğrulandı</div>
+                <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Doğrulandı</div>
               </div>
             </div>
           </div>
@@ -309,11 +310,11 @@ export default function OgrenciPanelPage() {
       </div>
 
       {/* Menü Sekmeleri */}
-      <div className="bg-white border-b border-gray-200 sticky top-20 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8">
+      <div className="bg-white border-b border-gray-200 sticky top-16 sm:top-20 z-30 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 sm:space-x-8 whitespace-nowrap min-w-max">
           <button
             onClick={() => setActiveTab("anlasmalar")}
-            className={`py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+            className={`py-3.5 sm:py-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all ${
               activeTab === "anlasmalar"
                 ? "border-[#2E5A27] text-[#2E5A27]"
                 : "border-transparent text-gray-500 hover:text-gray-900"
@@ -329,7 +330,7 @@ export default function OgrenciPanelPage() {
 
           <button
             onClick={() => setActiveTab("profil")}
-            className={`py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+            className={`py-3.5 sm:py-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all ${
               activeTab === "profil"
                 ? "border-[#2E5A27] text-[#2E5A27]"
                 : "border-transparent text-gray-500 hover:text-gray-900"
@@ -340,7 +341,7 @@ export default function OgrenciPanelPage() {
 
           <button
             onClick={() => setActiveTab("guvenlik")}
-            className={`py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+            className={`py-3.5 sm:py-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all ${
               activeTab === "guvenlik"
                 ? "border-[#2E5A27] text-[#2E5A27]"
                 : "border-transparent text-gray-500 hover:text-gray-900"
@@ -352,7 +353,7 @@ export default function OgrenciPanelPage() {
       </div>
 
       {/* Ana İçerik Alanı */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 flex-1 w-full">
         <AnimatePresence mode="wait">
           
           {/* 1. SEKME: ANLAŞMALAR & PROJELER */}

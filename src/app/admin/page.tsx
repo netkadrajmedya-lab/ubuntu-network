@@ -7,7 +7,7 @@ import {
   Building2, Phone, Mail, Trash2, ExternalLink, Lock, Loader2, 
   Sparkles, AlertCircle, RefreshCw, GraduationCap, MapPin, Globe, 
   KeyRound, UserPlus, ShieldAlert, CheckCircle2, Sliders, Edit3,
-  Copy, Send, Download, MessageCircle, Upload, FileText, Save
+  Copy, Send, Download, MessageCircle, Upload, FileText, Save, Menu
 } from "lucide-react";
 
 interface CurrentAdmin {
@@ -95,6 +95,7 @@ export default function AdminDashboard() {
   const [loginError, setLoginError] = useState("");
 
   const [activeTab, setActiveTab] = useState<"talepler" | "ogrenciler" | "vitrin" | "yoneticiler" | "guvenlik" | "eposta">("talepler");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [smtpConfig, setSmtpConfig] = useState({
     host: "",
     port: 465,
@@ -835,17 +836,69 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#1A1A1A] text-white flex flex-col h-screen sticky top-0 shrink-0">
-        <div className="p-6 border-b border-white/10">
-          <h1 className="text-2xl font-extrabold tracking-widest text-[#2E5A27]">UBUNTU</h1>
-          <p className="text-[#D97725] text-[10px] tracking-widest font-bold mt-1 uppercase">Yönetim & Yetkilendirme</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+      {/* Mobile Top Header (Screens < 1024px) */}
+      <div className="lg:hidden h-16 bg-[#1A1A1A] text-white flex items-center justify-between px-4 border-b border-white/10 shrink-0 sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-white hover:bg-white/10 rounded-xl transition-colors"
+            aria-label="Menüyü Aç"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+          <div>
+            <h1 className="text-lg font-extrabold tracking-widest text-[#2E5A27] leading-none">UBUNTU</h1>
+            <p className="text-[#D97725] text-[9px] tracking-widest font-bold uppercase mt-0.5">Yönetim Portalı</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={fetchData} 
+            className="p-2 text-gray-300 hover:text-white rounded-xl transition-colors"
+            title="Yenile"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="w-8 h-8 rounded-lg bg-[#2E5A27] text-white font-bold flex items-center justify-center text-xs">
+            {currentUser.username[0].toUpperCase()}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 lg:hidden"
+        />
+      )}
+
+      {/* Sidebar (Desktop static, Mobile slide-over drawer) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-[#1A1A1A] text-white flex flex-col h-screen transform transition-transform duration-300 ease-in-out
+        lg:static lg:translate-x-0 lg:w-64 lg:h-screen lg:shrink-0
+        ${mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-widest text-[#2E5A27]">UBUNTU</h1>
+            <p className="text-[#D97725] text-[10px] tracking-widest font-bold mt-1 uppercase">Yönetim & Yetkilendirme</p>
+          </div>
+          <button 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="lg:hidden p-2 text-gray-400 hover:text-white rounded-xl"
+            aria-label="Kapat"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           <button 
-            onClick={() => setActiveTab("talepler")}
+            onClick={() => { setActiveTab("talepler"); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'talepler' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <Briefcase className="w-4 h-4 shrink-0" /> İşveren Talepleri
@@ -857,7 +910,7 @@ export default function AdminDashboard() {
           </button>
           
           <button 
-            onClick={() => setActiveTab("ogrenciler")}
+            onClick={() => { setActiveTab("ogrenciler"); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'ogrenciler' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <Users className="w-4 h-4 shrink-0" /> Öğrenci Başvuruları
@@ -869,7 +922,7 @@ export default function AdminDashboard() {
           </button>
           
           <button 
-            onClick={() => setActiveTab("vitrin")}
+            onClick={() => { setActiveTab("vitrin"); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'vitrin' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <ShieldCheck className="w-4 h-4 shrink-0" /> Yayındaki Vitrin
@@ -883,7 +936,7 @@ export default function AdminDashboard() {
           </div>
 
           <button 
-            onClick={() => setActiveTab("yoneticiler")}
+            onClick={() => { setActiveTab("yoneticiler"); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'yoneticiler' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <KeyRound className="w-4 h-4 shrink-0 text-[#D97725]" /> Yöneticiler & Yetkiler
@@ -893,14 +946,14 @@ export default function AdminDashboard() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("guvenlik")}
+            onClick={() => { setActiveTab("guvenlik"); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'guvenlik' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <Sliders className="w-4 h-4 shrink-0" /> Şifre & Güvenlik
           </button>
 
           <button 
-            onClick={() => { setActiveTab("eposta"); fetchSmtpConfig(); }}
+            onClick={() => { setActiveTab("eposta"); fetchSmtpConfig(); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm ${activeTab === 'eposta' ? 'bg-[#2E5A27] text-white font-bold shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             <Mail className="w-4 h-4 shrink-0 text-[#D97725]" /> Otomatik E-Posta (SMTP)
@@ -931,26 +984,26 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4 w-96">
+        <header className="h-16 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-8 shrink-0 gap-3">
+          <div className="flex items-center gap-4 flex-1 max-w-xs sm:max-w-md">
             <div className="relative w-full">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Öğrenci, şirket, yönetici veya telefon ara..." 
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#2E5A27]/50" 
+                placeholder="Öğrenci, şirket veya telefon ara..." 
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-100 rounded-full text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2E5A27]/50" 
               />
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <button 
               onClick={fetchData} 
-              className="p-2 text-gray-500 hover:text-[#2E5A27] hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 text-gray-500 hover:text-[#2E5A27] hover:bg-gray-100 rounded-full transition-colors hidden sm:block"
               title="Yenile"
             >
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -958,11 +1011,11 @@ export default function AdminDashboard() {
             <a 
               href="/" 
               target="_blank" 
-              className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-[#2E5A27] bg-gray-100 px-3 py-2 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-[#2E5A27] bg-gray-100 px-3 py-2 rounded-xl transition-colors"
             >
-              Vitrine Git <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Vitrine Git</span> <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-gray-200">
               <div className="w-9 h-9 bg-[#2E5A27] text-white rounded-full flex items-center justify-center font-bold text-sm">
                 {currentUser.username[0].toUpperCase()}
               </div>
@@ -975,7 +1028,7 @@ export default function AdminDashboard() {
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-auto p-8">
+        <div className="flex-1 overflow-auto p-3 sm:p-6 lg:p-8">
           
           <AnimatePresence mode="wait">
             
@@ -1130,7 +1183,7 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left">
+                      <table className="w-full text-left min-w-[720px]">
                         <thead className="bg-gray-50 border-b border-gray-200">
                           <tr>
                             <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Aday Bilgisi</th>
@@ -1805,15 +1858,16 @@ export default function AdminDashboard() {
         {showAddAdminModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }}
-              className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl relative p-8"
+              className="bg-white rounded-3xl w-full max-w-xl max-h-[92vh] overflow-y-auto shadow-2xl relative p-5 sm:p-8 my-auto"
             >
               <button 
                 onClick={() => setShowAddAdminModal(false)} 
-                className="absolute top-5 right-5 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Kapat"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>
@@ -1969,15 +2023,16 @@ export default function AdminDashboard() {
         {selectedStudent && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }}
-              className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative p-8"
+              className="bg-white rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl relative p-5 sm:p-8 my-auto"
             >
               <button 
                 onClick={() => setSelectedStudent(null)} 
-                className="absolute top-5 right-5 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Kapat"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>
@@ -2192,15 +2247,16 @@ export default function AdminDashboard() {
         {approvalModalData && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl relative p-6 sm:p-8 border border-emerald-100"
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl relative p-5 sm:p-8 border border-emerald-100 my-auto"
             >
               <button 
                 onClick={() => setApprovalModalData(null)} 
-                className="absolute top-5 right-5 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Kapat"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>

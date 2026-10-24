@@ -48,7 +48,7 @@ export default function HeroSlider() {
   }, [slides.length]);
 
   return (
-    <div className="relative h-screen min-h-[700px] w-full overflow-hidden bg-[#1A1A1A]">
+    <div className="relative h-[90vh] min-h-[560px] sm:min-h-[640px] md:h-screen md:min-h-[700px] w-full overflow-hidden bg-[#1A1A1A]">
       <AnimatePresence initial={false}>
         <motion.div
           key={current}
@@ -63,13 +63,13 @@ export default function HeroSlider() {
             style={{ backgroundImage: `url(${slides[current].image})` }}
           />
           {/* Kaliteli, daha koyu bir gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30" />
           <div className="absolute inset-0 bg-[#2E5A27]/20 mix-blend-multiply" />
         </motion.div>
       </AnimatePresence>
 
       <div className="relative z-10 h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-24 sm:pt-28 pb-16">
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
@@ -79,12 +79,12 @@ export default function HeroSlider() {
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
               className="max-w-3xl"
             >
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <motion.span 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
-                  className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#D97725] text-white text-xs font-bold tracking-widest shadow-[0_0_15px_rgba(217,119,37,0.5)] uppercase"
+                  className="inline-flex items-center px-3.5 sm:px-4 py-1.5 rounded-full bg-[#D97725] text-white text-[10px] sm:text-xs font-bold tracking-widest shadow-[0_0_15px_rgba(217,119,37,0.5)] uppercase"
                 >
                   {slides[current].badge}
                 </motion.span>
@@ -92,24 +92,24 @@ export default function HeroSlider() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
-                  className="text-gray-300 text-sm font-medium tracking-widest uppercase hidden sm:block"
+                  className="text-gray-300 text-xs sm:text-sm font-medium tracking-widest uppercase hidden sm:block"
                 >
                   UBUNTU NETWORK
                 </motion.span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4 sm:mb-6 leading-[1.15] tracking-tight">
                 {slides[current].title}
               </h1>
 
-              <p className="text-lg sm:text-xl text-gray-200 mb-10 leading-relaxed font-light">
+              <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-10 leading-relaxed font-light">
                 {slides[current].subtitle}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <Link
                   href={slides[current].primaryButton.href}
-                  className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-[#2E5A27] text-white font-bold text-base hover:bg-[#3d7734] shadow-[0_4px_20px_rgba(46,90,39,0.4)] transition-all duration-300 hover:scale-105"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-[#2E5A27] text-white font-bold text-sm sm:text-base hover:bg-[#3d7734] shadow-[0_4px_20px_rgba(46,90,39,0.4)] transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   {slides[current].primaryButton.text}
                   {slides[current].primaryButton.icon}
@@ -117,7 +117,7 @@ export default function HeroSlider() {
 
                 <Link
                   href={slides[current].secondaryButton.href}
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-base backdrop-blur-md border border-white/20 transition-all duration-300 hover:scale-105"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm sm:text-base backdrop-blur-md border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   {slides[current].secondaryButton.text}
                 </Link>
@@ -128,7 +128,7 @@ export default function HeroSlider() {
       </div>
 
       {/* Slider Kontrolleri */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-2.5 sm:gap-3">
         {slides.map((_, index) => (
           <button
             key={index}

@@ -11,9 +11,19 @@
 
 @layer base {
   html {
-    @apply bg-[#0D0D0D];
+    @apply bg-[#0D0D0D] overflow-x-hidden;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-[#FAF9F6] text-[#1A1A1A] antialiased min-h-screen;
+    @apply bg-[#FAF9F6] text-[#1A1A1A] antialiased min-h-screen overflow-x-hidden;
   }
+}
+
+/* Yatay menüler ve sekmeler için kaydırma çubuğunu gizleyen yardımcı sınıf */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

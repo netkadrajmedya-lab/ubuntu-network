@@ -1,10 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#2E5A27",
+};
 
 export const metadata: Metadata = {
   title: "Ubuntu Network - Bağlantı • Fırsat • Gelecek",
@@ -17,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
-      <body className={inter.className}>
+    <html lang="tr" className="scroll-smooth">
+      <body className={`${inter.className} min-h-screen overflow-x-hidden w-full relative`}>
         <Providers>
           <Navbar />
           {children}

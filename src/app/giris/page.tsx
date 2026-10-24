@@ -122,7 +122,7 @@ export default function GirisPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pt-32 pb-24 relative overflow-hidden flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0D0D0D] pt-28 sm:pt-32 pb-16 sm:pb-24 relative overflow-hidden flex items-center justify-center px-3 sm:px-6">
       {/* Arka Plan Glow Efektleri */}
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-[#2E5A27] rounded-full blur-[200px] opacity-25 pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-[#D97725] rounded-full blur-[200px] opacity-20 pointer-events-none"></div>
@@ -130,25 +130,25 @@ export default function GirisPage() {
       <div className="max-w-xl w-full relative z-10">
         
         {/* Üst Başlık */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <Globe className="w-8 h-8 text-[#2E5A27] group-hover:text-[#D97725] transition-colors" />
-            <span className="font-extrabold text-2xl tracking-widest text-white uppercase">Ubuntu</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-3 sm:mb-4 group">
+            <Globe className="w-7 h-7 sm:w-8 sm:h-8 text-[#2E5A27] group-hover:text-[#D97725] transition-colors" />
+            <span className="font-extrabold text-xl sm:text-2xl tracking-widest text-white uppercase">Ubuntu</span>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-2">
             Giriş & Kullanıcı Portalı
           </h1>
-          <p className="text-gray-400 text-sm max-w-md mx-auto">
+          <p className="text-gray-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
             Öğrenci veya yönetici hesabınızla giriş yaparak anlaşmalarınızı ve platformu yönetin.
           </p>
         </div>
 
         {/* Sekme Butonları */}
-        <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1.5 mb-8 backdrop-blur-md">
+        <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 sm:p-1.5 mb-6 sm:mb-8 backdrop-blur-md">
           <button
             type="button"
             onClick={() => setActiveTab("student")}
-            className={`flex-1 py-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
               activeTab === "student"
                 ? "bg-[#2E5A27] text-white shadow-lg"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -160,7 +160,7 @@ export default function GirisPage() {
           <button
             type="button"
             onClick={() => setActiveTab("admin")}
-            className={`flex-1 py-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
               activeTab === "admin"
                 ? "bg-[#D97725] text-white shadow-lg"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -173,7 +173,7 @@ export default function GirisPage() {
         {/* Ana Form Kartı */}
         <motion.div 
           layout
-          className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl relative"
+          className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-5 sm:p-8 md:p-10 shadow-2xl backdrop-blur-xl relative"
         >
           <AnimatePresence mode="wait">
             
@@ -366,23 +366,24 @@ export default function GirisPage() {
         {showStatusModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }}
-              className="bg-[#1A1A1A] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative p-8"
+              className="bg-[#1A1A1A] border border-white/10 rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl relative p-5 sm:p-8 my-auto"
             >
               <button 
                 onClick={() => { setShowStatusModal(false); setStudentResult(null); setStudentError(""); }}
-                className="absolute top-5 right-5 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="Kapat"
               >
                 ✕
               </button>
 
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2 flex items-center gap-2">
                 <Search className="w-5 h-5 text-[#D97725]" /> Başvuru Durumunu Sorgula
               </h3>
-              <p className="text-xs text-gray-400 mb-6">
+              <p className="text-xs text-gray-400 mb-5 sm:mb-6">
                 Kayıt formunu doldururken kullandığınız telefon numaranızı veya e-postanızı giriniz.
               </p>
 

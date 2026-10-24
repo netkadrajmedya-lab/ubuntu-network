@@ -17,7 +17,7 @@ export default function HakkimizdaPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-[#1A1A1A] flex flex-col">
       
       {/* 1. HERO & MANİFESTO BÖLÜMÜ */}
-      <section className="relative pt-36 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#0A0A0A] text-white">
+      <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#0A0A0A] text-white">
         <div className="absolute top-[-20%] left-[-10%] w-[45rem] h-[45rem] bg-[#2E5A27] rounded-full blur-[220px] opacity-25 pointer-events-none"></div>
         <div className="absolute bottom-[-20%] right-[-10%] w-[45rem] h-[45rem] bg-[#D97725] rounded-full blur-[220px] opacity-20 pointer-events-none"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none"></div>
@@ -26,16 +26,16 @@ export default function HakkimizdaPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 text-[#D97725] text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-4 sm:mb-6 backdrop-blur-md"
           >
-            <Sparkles className="w-4 h-4" /> {t("about_hero_badge")}
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t("about_hero_badge")}
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-8 leading-tight"
+            className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 sm:mb-8 leading-tight"
           >
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D97725] via-amber-200 to-[#2E5A27]">
               {t("about_hero_title")}
@@ -47,10 +47,10 @@ export default function HakkimizdaPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="p-8 sm:p-12 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl relative shadow-2xl text-left"
+            className="p-5 sm:p-10 md:p-12 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl relative shadow-2xl text-left"
           >
-            <Quote className="w-12 h-12 text-[#D97725]/30 absolute top-4 left-6 -rotate-12" />
-            <p className="text-lg sm:text-2xl font-light text-gray-200 leading-relaxed italic relative z-10 pl-6">
+            <Quote className="w-8 h-8 sm:w-12 sm:h-12 text-[#D97725]/30 absolute top-3 left-4 sm:top-4 sm:left-6 -rotate-12" />
+            <p className="text-base sm:text-xl md:text-2xl font-light text-gray-200 leading-relaxed italic relative z-10 pl-4 sm:pl-6">
               &quot;{t("about_hero_desc")}&quot;
             </p>
           </motion.div>
@@ -58,47 +58,47 @@ export default function HakkimizdaPage() {
       </section>
 
       {/* 2. DEĞERLER & UBUNTU FELSEFESİ */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#2E5A27]/10 text-[#2E5A27] text-xs font-bold uppercase tracking-wider mb-3">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#2E5A27]/10 text-[#2E5A27] text-xs font-bold uppercase tracking-wider mb-3">
               {t("about_philosophy_badge")}
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1A1A1A]">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1A1A1A]">
               {t("about_philosophy_title")}
             </h2>
-            <p className="text-gray-600 mt-4 text-base leading-relaxed">
+            <p className="text-gray-600 mt-3 sm:mt-4 text-sm sm:text-base leading-relaxed">
               {t("about_philosophy_desc")}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-              <div className="w-14 h-14 bg-[#2E5A27]/10 text-[#2E5A27] rounded-2xl flex items-center justify-center mb-6">
-                <Globe className="w-7 h-7" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#2E5A27]/10 text-[#2E5A27] rounded-2xl flex items-center justify-center mb-5 sm:mb-6">
+                <Globe className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
-              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{t("about_card1_title")}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-2 sm:mb-3">{t("about_card1_title")}</h3>
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                 {t("about_card1_desc")}
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-              <div className="w-14 h-14 bg-[#D97725]/10 text-[#D97725] rounded-2xl flex items-center justify-center mb-6">
-                <ShieldCheck className="w-7 h-7" />
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#D97725]/10 text-[#D97725] rounded-2xl flex items-center justify-center mb-5 sm:mb-6">
+                <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
-              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{t("about_card2_title")}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-2 sm:mb-3">{t("about_card2_title")}</h3>
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                 {t("about_card2_desc")}
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-              <div className="w-14 h-14 bg-[#2E5A27]/10 text-[#2E5A27] rounded-2xl flex items-center justify-center mb-6">
-                <HeartHandshake className="w-7 h-7" />
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#2E5A27]/10 text-[#2E5A27] rounded-2xl flex items-center justify-center mb-5 sm:mb-6">
+                <HeartHandshake className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
-              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{t("about_card3_title")}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-2 sm:mb-3">{t("about_card3_title")}</h3>
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                 {t("about_card3_desc")}
               </p>
             </div>
@@ -107,20 +107,20 @@ export default function HakkimizdaPage() {
       </section>
 
       {/* 3. KURUCUMUZ BÖLÜMÜ (MUHAMMED MANSOUR SAY) */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#111111] text-white relative overflow-hidden border-t border-white/10">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#111111] text-white relative overflow-hidden border-t border-white/10">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#2E5A27_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D97725]/10 border border-[#D97725]/20 text-[#D97725] text-xs font-bold uppercase tracking-wider mb-3">
+          <div className="text-center mb-10 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#D97725]/10 border border-[#D97725]/20 text-[#D97725] text-xs font-bold uppercase tracking-wider mb-3">
               {t("founder_section_badge")}
             </div>
-            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
               {t("founder_section_title")}
             </h2>
           </div>
 
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 sm:p-12 lg:p-16 shadow-2xl flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-5 sm:p-10 lg:p-16 shadow-2xl flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
             
             {/* Kurucu Fotoğrafı & Prestij Kartı */}
             <div className="w-full lg:w-5/12 flex flex-col items-center">
