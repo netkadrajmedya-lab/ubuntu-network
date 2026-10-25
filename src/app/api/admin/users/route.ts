@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
-import { getAdminUsers, createAdminUser } from "@/lib/db";
+import { getAdminUsers, createAdminUser, syncAdminUsers } from "@/lib/db";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+export async function GET(request: Request) {
   try {
     const admins = await getAdminUsers();
     // Mask password
     const safeAdmins = admins.map(({ passwordHash, ...rest }) => rest);
-    return NextResponse.json({ success: true, admins: safeAdmins });
+    return NextResponse.json(
+      { success: true, admins: safeAdmins },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -16,6 +29,21 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // 1. Önbellek senkronizasyon desteği (Client-Server Cache Sync)
+    if (body.action === "sync" && Array.isArray(body.admins)) {
+      const synced = await syncAdminUsers(body.admins);
+      const safeAdmins = synced.map(({ passwordHash, ...rest }) => rest);
+      return NextResponse.json(
+        { success: true, admins: safeAdmins },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          },
+        }
+      );
+    }
+
+    // 2. Yeni Yönetici Oluşturma
     if (!body.username || !body.password || !body.fullName) {
       return NextResponse.json(
         { success: false, error: "Kullanıcı adı, şifre ve isim soyisim alanları zorunludur." },
@@ -39,7 +67,15 @@ export async function POST(request: Request) {
     });
 
     const { passwordHash, ...safeAdmin } = newAdmin;
-    return NextResponse.json({ success: true, admin: safeAdmin }, { status: 201 });
+    return NextResponse.json(
+      { success: true, admin: safeAdmin },
+      {
+        status: 201,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 400 });
   }

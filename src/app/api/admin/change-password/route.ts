@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminUsers, saveAdminUsers } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function POST(request: Request) {
   try {
     const { adminId, currentPassword, newPassword } = await request.json();
@@ -36,7 +40,14 @@ export async function POST(request: Request) {
     admin.passwordHash = newPassword;
     await saveAdminUsers(admins);
 
-    return NextResponse.json({ success: true, message: "Şifreniz başarıyla güncellendi." });
+    return NextResponse.json(
+      { success: true, message: "Şifreniz başarıyla güncellendi." },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

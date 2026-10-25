@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { getQuotes, createQuote } from "@/lib/db";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+export async function GET(request: Request) {
   try {
     const quotes = await getQuotes();
-    return NextResponse.json({ success: true, quotes });
+    return NextResponse.json(
+      { success: true, quotes },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -31,7 +42,15 @@ export async function POST(request: Request) {
       desc: body.desc,
     });
 
-    return NextResponse.json({ success: true, quote: newQuote }, { status: 201 });
+    return NextResponse.json(
+      { success: true, quote: newQuote },
+      {
+        status: 201,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

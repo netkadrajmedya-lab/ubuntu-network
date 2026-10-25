@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { findAdminByCredentials } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
@@ -23,7 +27,14 @@ export async function POST(request: Request) {
     // Do not leak passwordHash
     const { passwordHash, ...safeUser } = admin;
 
-    return NextResponse.json({ success: true, user: safeUser });
+    return NextResponse.json(
+      { success: true, user: safeUser },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

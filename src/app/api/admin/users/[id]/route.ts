@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { updateAdminUser, deleteAdminUser } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +26,14 @@ export async function PATCH(
     }
 
     const { passwordHash, ...safeAdmin } = updated;
-    return NextResponse.json({ success: true, admin: safeAdmin });
+    return NextResponse.json(
+      { success: true, admin: safeAdmin },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -39,7 +50,14 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Yönetici silinemedi." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 400 });
   }

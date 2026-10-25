@@ -466,6 +466,29 @@ export async function deleteQuote(id: string): Promise<boolean> {
 // ADMIN USERS OPERATIONS
 export async function getAdminUsers(): Promise<AdminUserRecord[]> {
   await ensureStorage();
+
+  // Önce diskteki birincil dosyayı doğrudan kontrol et (başka işlem veya worker yazmış olabilir)
+  try {
+    const data = await fs.readFile(ADMINS_FILE, "utf-8");
+    const list = JSON.parse(data);
+    if (Array.isArray(list) && list.length > 0) {
+      globalThis.__UBUNTU_ADMINS__ = list;
+      return [...list];
+    }
+  } catch {
+    // ADMINS_FILE okunamazsa SEED dosyasını kontrol et
+    try {
+      const seedData = await fs.readFile(SEED_ADMINS_FILE, "utf-8");
+      const seedList = JSON.parse(seedData);
+      if (Array.isArray(seedList) && seedList.length > 0) {
+        if (!globalThis.__UBUNTU_ADMINS__ || globalThis.__UBUNTU_ADMINS__.length <= seedList.length) {
+          globalThis.__UBUNTU_ADMINS__ = seedList;
+          return [...seedList];
+        }
+      }
+    } catch {}
+  }
+
   if (globalThis.__UBUNTU_ADMINS__ && globalThis.__UBUNTU_ADMINS__.length > 0) {
     return [...globalThis.__UBUNTU_ADMINS__];
   }
@@ -474,12 +497,90 @@ export async function getAdminUsers(): Promise<AdminUserRecord[]> {
 
 export async function saveAdminUsers(admins: AdminUserRecord[]): Promise<void> {
   globalThis.__UBUNTU_ADMINS__ = [...admins];
+
+  // 1. Birincil depolama dizinine yaz
   try {
     await fs.mkdir(STORAGE_DIR, { recursive: true });
     await fs.writeFile(ADMINS_FILE, JSON.stringify(admins, null, 2), "utf-8");
   } catch (err) {
     console.warn("Storage write fallback to memory:", err);
   }
+
+  // 2. Eğer SEED_STORAGE_DIR farklı ise ve dizin yazılabilir ise oraya da yaz (VPS, Docker, PM2, Local)
+  if (STORAGE_DIR !== SEED_STORAGE_DIR) {
+    try {
+      await fs.mkdir(SEED_STORAGE_DIR, { recursive: true });
+      await fs.writeFile(SEED_ADMINS_FILE, JSON.stringify(admins, null, 2), "utf-8");
+    } catch {
+      // Serverless salt-okunur ortamlarda yut
+    }
+  }
+}
+
+export async function syncAdminUsers(incomingAdmins: AdminUserRecord[]): Promise<AdminUserRecord[]> {
+  const currentAdmins = await getAdminUsers();
+  const map = new Map<string, AdminUserRecord>();
+
+  for (const adm of currentAdmins) {
+    if (adm && adm.username) {
+      map.set(adm.username.toLowerCase(), { ...adm });
+    }
+  }
+
+  let hasChanges = false;
+  for (const inc of incomingAdmins) {
+    if (!inc || !inc.username) continue;
+    const key = inc.username.toLowerCase();
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, {
+        id: inc.id || `adm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        username: inc.username,
+        passwordHash: inc.passwordHash || "ubuntu2026",
+        fullName: inc.fullName || inc.username,
+        email: inc.email || "",
+        role: inc.role || "operator",
+        permissions: inc.permissions || {
+          canApproveStudents: true,
+          canViewBudgets: false,
+          canManageQuotes: true,
+          canManageAdmins: false,
+        },
+        status: inc.status || "active",
+        createdAt: inc.createdAt || new Date().toISOString(),
+        lastLogin: inc.lastLogin,
+      });
+      hasChanges = true;
+    } else {
+      // Statü, rol veya şifre güncellenmişse senkronize et
+      if (inc.status && inc.status !== existing.status) {
+        existing.status = inc.status;
+        hasChanges = true;
+      }
+      if (inc.role && inc.role !== existing.role) {
+        existing.role = inc.role;
+        hasChanges = true;
+      }
+      if (inc.passwordHash && inc.passwordHash !== existing.passwordHash) {
+        existing.passwordHash = inc.passwordHash;
+        hasChanges = true;
+      }
+      if (inc.fullName && inc.fullName !== existing.fullName) {
+        existing.fullName = inc.fullName;
+        hasChanges = true;
+      }
+      if (inc.permissions && JSON.stringify(inc.permissions) !== JSON.stringify(existing.permissions)) {
+        existing.permissions = { ...existing.permissions, ...inc.permissions };
+        hasChanges = true;
+      }
+    }
+  }
+
+  const merged = Array.from(map.values());
+  if (hasChanges || merged.length !== currentAdmins.length) {
+    await saveAdminUsers(merged);
+  }
+  return merged;
 }
 
 export async function findAdminByCredentials(username: string, password: string): Promise<AdminUserRecord | null> {

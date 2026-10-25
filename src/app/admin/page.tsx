@@ -248,7 +248,7 @@ export default function AdminDashboard() {
     reader.readAsDataURL(file);
   };
 
-  // Oturum Kontrolü
+  // Oturum Kontrolü ve Başlangıç Önbellek Yüklemesi
   useEffect(() => {
     const savedUser = sessionStorage.getItem("ubuntu_admin_user");
     if (savedUser) {
@@ -258,6 +258,16 @@ export default function AdminDashboard() {
         sessionStorage.removeItem("ubuntu_admin_user");
       }
     }
+    // Önbellekteki yöneticileri anında yükle (sayfa yenilendiğinde kaybolmaması için)
+    try {
+      const cached = localStorage.getItem("UBUNTU_ADMINS_CACHE");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAdminUsers(parsed);
+        }
+      }
+    } catch (e) {}
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -294,10 +304,11 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const cacheBust = `?t=${Date.now()}`;
       const [resStudents, resQuotes, resAdmins] = await Promise.all([
-        fetch("/api/students"),
-        fetch("/api/quotes"),
-        fetch("/api/admin/users"),
+        fetch(`/api/students${cacheBust}`, { cache: "no-store" }),
+        fetch(`/api/quotes${cacheBust}`, { cache: "no-store" }),
+        fetch(`/api/admin/users${cacheBust}`, { cache: "no-store" }),
       ]);
       const dataStudents = await resStudents.json();
       const dataQuotes = await resQuotes.json();
@@ -329,9 +340,70 @@ export default function AdminDashboard() {
         }
       }
       if (dataQuotes.success) setQuotes(dataQuotes.quotes || []);
-      if (dataAdmins.success) setAdminUsers(dataAdmins.admins || []);
+
+      // YÖNETİCİLERİ SENKRONİZE ET VE KALICI TUT
+      let serverAdmins: CurrentAdmin[] = dataAdmins.success && Array.isArray(dataAdmins.admins) ? dataAdmins.admins : [];
+      let cachedAdmins: CurrentAdmin[] = [];
+      let storedPasswords: Record<string, string> = {};
+
+      try {
+        const cached = localStorage.getItem("UBUNTU_ADMINS_CACHE");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            cachedAdmins = parsed;
+          }
+        }
+        const pwData = localStorage.getItem("UBUNTU_ADMIN_PASSWORDS");
+        if (pwData) {
+          storedPasswords = JSON.parse(pwData);
+        }
+      } catch (e) {}
+
+      // Eğer tarayıcı önbelleğinde sunucuda olmayan yöneticiler varsa (örneğin sunucusuz cold start)
+      const serverUsernames = new Set(serverAdmins.map((a: CurrentAdmin) => a.username?.toLowerCase()));
+      const missingOnServer = cachedAdmins.filter((c: CurrentAdmin) => c.username && !serverUsernames.has(c.username.toLowerCase()));
+
+      if (missingOnServer.length > 0) {
+        try {
+          const adminsToSync = cachedAdmins.map(adm => ({
+            ...adm,
+            passwordHash: storedPasswords[adm.username.toLowerCase()] || "ubuntu2026",
+          }));
+          const syncRes = await fetch("/api/admin/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "sync", admins: adminsToSync }),
+          });
+          const syncData = await syncRes.json();
+          if (syncData.success && Array.isArray(syncData.admins)) {
+            serverAdmins = syncData.admins;
+          } else {
+            serverAdmins = [...serverAdmins, ...missingOnServer];
+          }
+        } catch {
+          serverAdmins = [...serverAdmins, ...missingOnServer];
+        }
+      }
+
+      const finalAdmins = serverAdmins.length > 0 ? serverAdmins : cachedAdmins;
+      setAdminUsers(finalAdmins);
+      try {
+        if (finalAdmins.length > 0) {
+          localStorage.setItem("UBUNTU_ADMINS_CACHE", JSON.stringify(finalAdmins));
+        }
+      } catch (e) {}
     } catch (err) {
       console.error("Veri yüklenirken hata:", err);
+      try {
+        const cached = localStorage.getItem("UBUNTU_ADMINS_CACHE");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAdminUsers(parsed);
+          }
+        }
+      } catch (e) {}
     } finally {
       setLoading(false);
     }
@@ -598,7 +670,20 @@ export default function AdminDashboard() {
         throw new Error(data.error || "Yönetici eklenemedi.");
       }
 
-      setAdminUsers([...adminUsers, data.admin]);
+      const createdAdmin = data.admin;
+      const nextAdmins = [...adminUsers.filter(a => a.id !== createdAdmin.id), createdAdmin];
+      setAdminUsers(nextAdmins);
+
+      // Tarayıcı önbelleğinde ve şifre haritasında kalıcı olarak sakla
+      try {
+        localStorage.setItem("UBUNTU_ADMINS_CACHE", JSON.stringify(nextAdmins));
+        let pwMap: Record<string, string> = {};
+        const stored = localStorage.getItem("UBUNTU_ADMIN_PASSWORDS");
+        if (stored) pwMap = JSON.parse(stored);
+        pwMap[createdAdmin.username.toLowerCase()] = newAdminPassword;
+        localStorage.setItem("UBUNTU_ADMIN_PASSWORDS", JSON.stringify(pwMap));
+      } catch (e) {}
+
       setShowAddAdminModal(false);
       setNewAdminUsername("");
       setNewAdminPassword("");
@@ -616,7 +701,7 @@ export default function AdminDashboard() {
       alert("Kendi hesabınızı pasife alamazsınız.");
       return;
     }
-    const newStatus = admin.status === "active" ? "inactive" : "active";
+    const newStatus: "active" | "inactive" = admin.status === "active" ? "inactive" : "active";
     try {
       const res = await fetch(`/api/admin/users/${admin.id}`, {
         method: "PATCH",
@@ -625,7 +710,11 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setAdminUsers(adminUsers.map(a => a.id === admin.id ? { ...a, status: newStatus } : a));
+        const nextAdmins = adminUsers.map(a => a.id === admin.id ? { ...a, status: newStatus } : a);
+        setAdminUsers(nextAdmins);
+        try {
+          localStorage.setItem("UBUNTU_ADMINS_CACHE", JSON.stringify(nextAdmins));
+        } catch (e) {}
       }
     } catch (err) {
       alert("Durum güncellenemedi.");
@@ -644,7 +733,11 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/users/${adminId}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        setAdminUsers(adminUsers.filter(a => a.id !== adminId));
+        const nextAdmins = adminUsers.filter(a => a.id !== adminId);
+        setAdminUsers(nextAdmins);
+        try {
+          localStorage.setItem("UBUNTU_ADMINS_CACHE", JSON.stringify(nextAdmins));
+        } catch (e) {}
         alert("Yönetici hesabı silindi.");
       } else {
         alert(data.error || "Yönetici silinemedi.");
@@ -670,6 +763,13 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
+        try {
+          let pwMap: Record<string, string> = {};
+          const stored = localStorage.getItem("UBUNTU_ADMIN_PASSWORDS");
+          if (stored) pwMap = JSON.parse(stored);
+          pwMap[adminUsername.toLowerCase()] = newPassword;
+          localStorage.setItem("UBUNTU_ADMIN_PASSWORDS", JSON.stringify(pwMap));
+        } catch (e) {}
         alert(`"${adminUsername}" kullanıcısının şifresi başarıyla güncellendi.`);
       }
     } catch (err) {
