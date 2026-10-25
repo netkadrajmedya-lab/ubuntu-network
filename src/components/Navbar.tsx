@@ -16,16 +16,16 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <header className="fixed top-0 w-full bg-[#FAF9F6]/85 backdrop-blur-md z-50 border-b border-[#2E5A27]/10 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+    <header className="fixed top-0 left-0 right-0 w-full bg-[#FAF9F6]/90 backdrop-blur-md z-50 border-b border-[#2E5A27]/10 transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Globe className="h-8 w-8 text-[#2E5A27] group-hover:text-[#D97725] transition-colors duration-500" />
-              <div className="flex flex-col">
-                <span className="font-extrabold text-2xl tracking-widest text-[#1A1A1A] leading-none uppercase">Ubuntu</span>
-                <span className="text-[9px] tracking-[0.25em] text-[#D97725] font-bold mt-1">BAĞLANTI • FIRSAT • GELECEK</span>
+          <div className="flex-shrink-0 flex items-center min-w-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group min-w-0">
+              <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-[#2E5A27] group-hover:text-[#D97725] transition-colors duration-500 shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="font-extrabold text-lg sm:text-2xl tracking-wider sm:tracking-widest text-[#1A1A1A] leading-none uppercase">Ubuntu</span>
+                <span className="text-[7.5px] sm:text-[9px] tracking-[0.12em] sm:tracking-[0.25em] text-[#D97725] font-bold mt-0.5 sm:mt-1 truncate">BAĞLANTI • FIRSAT • GELECEK</span>
               </div>
             </Link>
           </div>
@@ -105,7 +105,7 @@ export default function Navbar() {
           </nav>
 
           {/* Mobile menu and mobile lang button */}
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Mobile Lang Button */}
             <div className="relative">
               <button
@@ -114,7 +114,7 @@ export default function Navbar() {
                   setIsLangOpen(!isLangOpen);
                   if (isOpen) setIsOpen(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 bg-white text-xs font-bold shadow-sm active:scale-95 transition-transform"
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-gray-200 bg-white text-[11px] sm:text-xs font-bold shadow-sm active:scale-95 transition-transform"
                 aria-label="Dil Seçimi"
               >
                 <span>{activeLangObj.flag}</span>
@@ -129,7 +129,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-48 sm:w-52 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 overflow-hidden"
                   >
                     <div className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 mb-1">
                       Dil Seçimi / Language
@@ -165,7 +165,7 @@ export default function Navbar() {
                 toggleMenu();
                 if (isLangOpen) setIsLangOpen(false);
               }} 
-              className="text-[#1A1A1A] hover:text-[#2E5A27] focus:outline-none p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              className="text-[#1A1A1A] hover:text-[#2E5A27] focus:outline-none p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 transition-colors shrink-0"
               aria-label="Menüyü Aç/Kapat"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -181,9 +181,9 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/95 backdrop-blur-xl border-b border-[#2E5A27]/10 overflow-hidden shadow-xl"
+            className="lg:hidden bg-white/95 backdrop-blur-xl border-b border-[#2E5A27]/10 overflow-hidden shadow-2xl max-h-[calc(100vh-4.5rem)] overflow-y-auto"
           >
-            <div className="px-5 pt-3 pb-6 space-y-3.5 flex flex-col">
+            <div className="px-4 sm:px-6 pt-3 pb-6 space-y-3 flex flex-col w-full max-w-full">
               <Link href="/#nasil-calisir" onClick={toggleMenu} className="block py-2 text-base font-semibold text-[#1A1A1A] hover:text-[#2E5A27]">
                 {t("nav_how_it_works")}
               </Link>
