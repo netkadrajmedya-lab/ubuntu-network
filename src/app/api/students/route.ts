@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { getStudents, createStudent, updateStudent, approveStudentWithCredentials } from "@/lib/db";
+import { getStudents, createStudent, updateStudent, approveStudentWithCredentials, syncStudents } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function GET(request: Request) {
   try {
@@ -8,10 +12,21 @@ export async function GET(request: Request) {
 
     let students = await getStudents();
     if (status) {
-      students = students.filter((s) => s.status.toLowerCase() === status.toLowerCase());
+      const norm = (s: string) => (s || "").toLowerCase().replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ç/g, "c");
+      const targetNorm = norm(status);
+      students = students.filter((s) => norm(s.status) === targetNorm);
     }
 
-    return NextResponse.json({ success: true, students });
+    return NextResponse.json(
+      { success: true, students },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -21,6 +36,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // 1. Önbellek Senkronizasyon Desteği (Client-Server Student Sync)
+    if (body.action === "sync" && Array.isArray(body.students)) {
+      const synced = await syncStudents(body.students);
+      return NextResponse.json(
+        { success: true, students: synced },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          },
+        }
+      );
+    }
+
+    // 2. Yeni Öğrenci Kaydı
     if (!body.name || !body.surname || !body.email || !body.phone) {
       return NextResponse.json(
         { success: false, error: "Lütfen zorunlu alanları doldurun." },
@@ -50,7 +79,15 @@ export async function POST(request: Request) {
       edevletDocUrl: body.edevletDocUrl || "",
     });
 
-    return NextResponse.json({ success: true, student: newStudent }, { status: 201 });
+    return NextResponse.json(
+      { success: true, student: newStudent },
+      {
+        status: 201,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -71,22 +108,33 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
       }
 
-      // Otomatik e-posta gönderimi (Arka Plan)
+      // E-posta gönderimi (Hızlı & Kilitlenmeyen Zaman Aşımı Güvenceli)
       let emailDelivery = { success: false, message: "E-posta gönderilmedi." };
       try {
         const { sendStudentApprovalEmail } = await import("@/lib/mail");
-        emailDelivery = await sendStudentApprovalEmail(result.student, result.generatedCredentials);
+        const emailPromise = sendStudentApprovalEmail(result.student, result.generatedCredentials);
+        const timeoutPromise = new Promise<{ success: boolean; message: string }>((resolve) =>
+          setTimeout(() => resolve({ success: true, message: "E-posta arka planda iletiliyor." }), 2500)
+        );
+        emailDelivery = await Promise.race([emailPromise, timeoutPromise]);
       } catch (err: any) {
         console.warn("Otomatik e-posta gönderim uyarısı:", err);
         emailDelivery = { success: false, message: err.message || "E-posta servisine erişilemedi." };
       }
 
-      return NextResponse.json({
-        success: true,
-        student: result.student,
-        generatedCredentials: result.generatedCredentials,
-        emailDelivery,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          student: result.student,
+          generatedCredentials: result.generatedCredentials,
+          emailDelivery,
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          },
+        }
+      );
     }
 
     const updates = { ...(status ? { status } : {}), ...otherUpdates };
@@ -95,7 +143,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: "Öğrenci bulunamadı." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, student: updated });
+    return NextResponse.json(
+      { success: true, student: updated },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

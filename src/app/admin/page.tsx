@@ -126,6 +126,10 @@ export default function AdminDashboard() {
   // Öğrenci Detay Modalı
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // Mevcut Üyeyi Vitrine Ekleme Modalı
+  const [showAddVitrinModal, setShowAddVitrinModal] = useState(false);
+  const [vitrinSearchTerm, setVitrinSearchTerm] = useState("");
+
   // Yeni Yönetici Ekleme Modalı
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [newAdminUsername, setNewAdminUsername] = useState("");
@@ -268,6 +272,17 @@ export default function AdminDashboard() {
         }
       }
     } catch (e) {}
+
+    // Önbellekteki öğrencileri anında yükle (sayfa yenilendiğinde kaybolmaması için)
+    try {
+      const cachedStudents = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+      if (cachedStudents) {
+        const parsed = JSON.parse(cachedStudents);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setStudents(parsed);
+        }
+      }
+    } catch (e) {}
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -315,29 +330,47 @@ export default function AdminDashboard() {
       const dataAdmins = await resAdmins.json();
 
       if (dataStudents.success) {
-        if (Array.isArray(dataStudents.students) && dataStudents.students.length > 0) {
-          setStudents(dataStudents.students);
+        let serverStudents: Student[] = Array.isArray(dataStudents.students) ? dataStudents.students : [];
+        let cachedStudents: Student[] = [];
+
+        try {
+          const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              cachedStudents = parsed;
+            }
+          }
+        } catch (e) {}
+
+        const serverStudentIds = new Set(serverStudents.map(s => String(s.id).trim()));
+        const missingOnServer = cachedStudents.filter(c => c.id && !serverStudentIds.has(String(c.id).trim()));
+
+        if (missingOnServer.length > 0) {
           try {
-            localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(dataStudents.students));
-          } catch (e) {}
-        } else {
-          // Sunucu henüz soğuk başlangıçtaysa tarayıcı önbelleğinden geri yükle
-          try {
-            const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
-            if (cached) {
-              const parsed = JSON.parse(cached);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                setStudents(parsed);
-              } else {
-                setStudents([]);
-              }
+            const syncRes = await fetch("/api/students", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "sync", students: cachedStudents }),
+            });
+            const syncData = await syncRes.json();
+            if (syncData.success && Array.isArray(syncData.students)) {
+              serverStudents = syncData.students;
             } else {
-              setStudents([]);
+              serverStudents = [...serverStudents, ...missingOnServer];
             }
           } catch {
-            setStudents([]);
+            serverStudents = [...serverStudents, ...missingOnServer];
           }
         }
+
+        const finalStudents = serverStudents.length > 0 ? serverStudents : cachedStudents;
+        setStudents(finalStudents);
+        try {
+          if (finalStudents.length > 0) {
+            localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(finalStudents));
+          }
+        } catch (e) {}
       }
       if (dataQuotes.success) setQuotes(dataQuotes.quotes || []);
 
@@ -1357,14 +1390,23 @@ export default function AdminDashboard() {
                                   
                                   {(currentUser.role === "super_admin" || currentUser.permissions.canApproveStudents) && (
                                     <>
-                                      {student.status !== "Onaylandı" && (
+                                      {student.status !== "Onaylandı" ? (
                                         <button 
                                           disabled={statusUpdatingId === student.id}
                                           onClick={() => handleStudentStatus(student.id, "Onaylandı")}
-                                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-bold disabled:opacity-50" 
-                                          title="Onayla ve Vitrine Çıkar"
+                                          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors font-bold disabled:opacity-50" 
+                                          title="Vitrine Al & Onayla"
                                         >
-                                          {statusUpdatingId === student.id ? <Loader2 className="w-4 h-4 animate-spin text-green-600" /> : <Check className="w-4 h-4" />}
+                                          {statusUpdatingId === student.id ? <Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> : <Sparkles className="w-4 h-4" />}
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          disabled={statusUpdatingId === student.id}
+                                          onClick={() => handleStudentStatus(student.id, "Bekliyor")}
+                                          className="p-2 text-emerald-700 bg-emerald-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors font-bold disabled:opacity-50" 
+                                          title="Vitrinde Yayında (Tıklayarak Vitrinden Kaldır)"
+                                        >
+                                          {statusUpdatingId === student.id ? <Loader2 className="w-4 h-4 animate-spin text-orange-600" /> : <ShieldCheck className="w-4 h-4" />}
                                         </button>
                                       )}
 
@@ -1403,57 +1445,87 @@ export default function AdminDashboard() {
             {/* 3. SEKME: YAYINDAKİ VİTRİN */}
             {activeTab === 'vitrin' && (
               <motion.div key="vitrin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-[#1A1A1A]">Yayındaki Vitrin Profilleri</h2>
                     <p className="text-gray-500 text-sm mt-1">
                       Şu anda ana sayfada işverenlerin görebildiği ve teklif isteyebildiği aktif yetenekler.
                     </p>
                   </div>
+
+                  {(currentUser.role === "super_admin" || currentUser.permissions.canApproveStudents) && (
+                    <button 
+                      onClick={() => { setShowAddVitrinModal(true); setVitrinSearchTerm(""); }}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-xl font-bold text-sm shadow-md transition-all shrink-0"
+                    >
+                      <Sparkles className="w-4 h-4" /> Mevcut Üyeyi Vitrine Al
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {students.filter(s => s.status === "Onaylandı").map(student => (
-                    <div key={student.id} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-14 h-14 rounded-2xl bg-gray-200 overflow-hidden shrink-0">
-                            {student.photo ? (
-                              <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-bold text-gray-500">
-                                {student.name[0]}
-                              </div>
-                            )}
+                {students.filter(s => s.status === "Onaylandı").length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                    <Sparkles className="w-12 h-12 text-[#2E5A27]/40 mx-auto mb-3" />
+                    <h3 className="text-gray-800 font-bold text-lg mb-1">Şu Anda Vitrinde Gösterilen Üye Yok</h3>
+                    <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">
+                      Kayıtlı mevcut adaylar arasından dilediğinizi vitrine çıkararak ana sayfada işverenlere sergileyebilirsiniz.
+                    </p>
+                    {(currentUser.role === "super_admin" || currentUser.permissions.canApproveStudents) && (
+                      <button 
+                        onClick={() => { setShowAddVitrinModal(true); setVitrinSearchTerm(""); }}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-xl font-bold text-sm shadow-lg transition-all"
+                      >
+                        <Sparkles className="w-4 h-4" /> Mevcut Üyeyi Vitrine Al
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {students.filter(s => s.status === "Onaylandı").map(student => (
+                      <div key={student.id} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-14 h-14 rounded-2xl bg-gray-200 overflow-hidden shrink-0">
+                              {student.photo ? (
+                                <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center font-bold text-gray-500">
+                                  {student.name[0]}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-[#1A1A1A] text-lg">{student.fullName || student.name}</h4>
+                              <p className="text-xs text-[#D97725] font-semibold">{student.category}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">{student.city} • {student.workType}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-[#1A1A1A] text-lg">{student.fullName || student.name}</h4>
-                            <p className="text-xs text-[#D97725] font-semibold">{student.category}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{student.city} • {student.workType}</p>
-                          </div>
+
+                          <p className="text-xs text-gray-600 line-clamp-3 bg-gray-50 p-3 rounded-xl mb-4">
+                            {student.bio}
+                          </p>
                         </div>
 
-                        <p className="text-xs text-gray-600 line-clamp-3 bg-gray-50 p-3 rounded-xl mb-4">
-                          {student.bio}
-                        </p>
-                      </div>
-
-                      <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <span className="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
-                          Vitrinde Aktif
-                        </span>
-                        {currentUser.permissions.canApproveStudents && (
-                          <button 
-                            onClick={() => handleStudentStatus(student.id, "Bekliyor")}
-                            className="text-xs text-orange-600 hover:text-orange-800 font-bold hover:underline"
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                          <button
+                            onClick={() => setSelectedStudent(student)}
+                            className="text-xs text-gray-600 hover:text-blue-600 font-bold flex items-center gap-1"
                           >
-                            Vitrinden Kaldır
+                            <Eye className="w-3.5 h-3.5" /> Detaylar
                           </button>
-                        )}
+                          {currentUser.permissions.canApproveStudents && (
+                            <button 
+                              onClick={() => handleStudentStatus(student.id, "Bekliyor")}
+                              className="text-xs text-orange-600 hover:text-orange-800 font-bold hover:underline"
+                            >
+                              Vitrinden Kaldır
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -1953,6 +2025,162 @@ export default function AdminDashboard() {
         </div>
       </main>
 
+      {/* MEVCUT ÜYEYİ VİTRİNE EKLEME MODALI */}
+      <AnimatePresence>
+        {showAddVitrinModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }}
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] shadow-2xl relative flex flex-col my-auto overflow-hidden"
+            >
+              <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#2E5A27] flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A]">Mevcut Üyeyi Vitrine Al</h3>
+                    <p className="text-xs text-gray-500">Kayıtlı adaylar arasından seçim yaparak ana sayfa vitrininde yayınlayın.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowAddVitrinModal(false)}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                  aria-label="Kapat"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Arama Inputu */}
+              <div className="p-4 bg-gray-50 border-b border-gray-100">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="text"
+                    value={vitrinSearchTerm}
+                    onChange={(e) => setVitrinSearchTerm(e.target.value)}
+                    placeholder="Aday adı, soyadı, üniversite, bölüm veya şehir ile ara..."
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2E5A27]"
+                  />
+                </div>
+              </div>
+
+              {/* Üye Listesi */}
+              <div className="p-4 overflow-y-auto flex-1 space-y-3 max-h-[55vh]">
+                {(() => {
+                  const eligible = students.filter(s => {
+                    if (!vitrinSearchTerm) return true;
+                    const q = vitrinSearchTerm.toLowerCase();
+                    return (
+                      (s.fullName || s.name || "").toLowerCase().includes(q) ||
+                      (s.surname || "").toLowerCase().includes(q) ||
+                      (s.uni || "").toLowerCase().includes(q) ||
+                      (s.dept || "").toLowerCase().includes(q) ||
+                      (s.city || "").toLowerCase().includes(q) ||
+                      (s.category || "").toLowerCase().includes(q)
+                    );
+                  });
+
+                  if (eligible.length === 0) {
+                    return (
+                      <div className="py-12 text-center text-gray-400">
+                        <Users className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm font-semibold">Aramanıza uygun aday bulunamadı.</p>
+                      </div>
+                    );
+                  }
+
+                  return eligible.map(candidate => {
+                    const isAlreadyInVitrin = candidate.status === "Onaylandı";
+                    return (
+                      <div 
+                        key={candidate.id}
+                        className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                          isAlreadyInVitrin ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-200 hover:border-[#2E5A27]/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-11 h-11 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                            {candidate.photo ? (
+                              <img src={candidate.photo} alt={candidate.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-gray-500 text-sm">
+                                {candidate.name[0]}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-[#1A1A1A] text-sm truncate">
+                              {candidate.fullName || `${candidate.name} ${candidate.surname || ''}`.trim()}
+                            </h4>
+                            <p className="text-xs text-gray-500 truncate">
+                              {candidate.uni} • {candidate.dept}
+                            </p>
+                            <p className="text-[11px] text-[#D97725] font-semibold mt-0.5">
+                              {candidate.category} • {candidate.city}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-2">
+                          {isAlreadyInVitrin ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Vitrinde
+                              </span>
+                              <button
+                                disabled={statusUpdatingId === candidate.id}
+                                onClick={async () => {
+                                  await handleStudentStatus(candidate.id, "Bekliyor");
+                                }}
+                                className="text-xs text-orange-600 hover:text-orange-800 font-bold px-2 py-1 hover:bg-orange-50 rounded-lg transition-colors"
+                              >
+                                Kaldır
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              disabled={statusUpdatingId === candidate.id}
+                              onClick={async () => {
+                                await handleStudentStatus(candidate.id, "Onaylandı");
+                              }}
+                              className="px-4 py-2 bg-[#2E5A27] hover:bg-[#386d30] text-white rounded-xl text-xs font-bold shadow transition-all flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {statusUpdatingId === candidate.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              )}
+                              Vitrine Al
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  Toplam {students.length} adayın {students.filter(s => s.status === "Onaylandı").length} tanesi vitrinde.
+                </span>
+                <button
+                  onClick={() => setShowAddVitrinModal(false)}
+                  className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Kapat
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* YENİ YÖNETİCİ EKLEME MODALI */}
       <AnimatePresence>
         {showAddAdminModal && (
@@ -2324,14 +2552,23 @@ export default function AdminDashboard() {
                         Reddet
                       </button>
                     )}
-                    {selectedStudent.status !== "Onaylandı" && (
+                    {selectedStudent.status === "Onaylandı" ? (
+                      <button 
+                        disabled={statusUpdatingId === selectedStudent.id}
+                        onClick={() => handleStudentStatus(selectedStudent.id, "Bekliyor")}
+                        className="px-6 py-2.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-bold text-sm hover:bg-orange-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {statusUpdatingId === selectedStudent.id ? <Loader2 className="w-4 h-4 animate-spin text-orange-700" /> : <X className="w-4 h-4" />}
+                        Vitrinden Kaldır
+                      </button>
+                    ) : (
                       <button 
                         disabled={statusUpdatingId === selectedStudent.id}
                         onClick={() => handleStudentStatus(selectedStudent.id, "Onaylandı")}
                         className="px-6 py-2.5 bg-[#2E5A27] text-white rounded-xl font-bold text-sm hover:bg-[#386d30] shadow-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
-                        {statusUpdatingId === selectedStudent.id ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Check className="w-4 h-4" />}
-                        Onayla ve Vitrine Çıkar
+                        {statusUpdatingId === selectedStudent.id ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Sparkles className="w-4 h-4" />}
+                        Vitrine Al & Onayla
                       </button>
                     )}
                   </>

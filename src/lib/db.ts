@@ -206,7 +206,30 @@ async function ensureStorage() {
 // STUDENTS OPERATIONS
 export async function getStudents(): Promise<StudentRecord[]> {
   await ensureStorage();
-  if (globalThis.__UBUNTU_STUDENTS__) {
+
+  // Önce diskteki birincil dosyayı doğrudan kontrol et (başka işlem veya worker yazmış olabilir)
+  try {
+    const data = await fs.readFile(STUDENTS_FILE, "utf-8");
+    const list = JSON.parse(data);
+    if (Array.isArray(list) && list.length > 0) {
+      globalThis.__UBUNTU_STUDENTS__ = list;
+      return [...list];
+    }
+  } catch {
+    // STUDENTS_FILE okunamazsa SEED dosyasını kontrol et
+    try {
+      const seedData = await fs.readFile(SEED_STUDENTS_FILE, "utf-8");
+      const seedList = JSON.parse(seedData);
+      if (Array.isArray(seedList) && seedList.length > 0) {
+        if (!globalThis.__UBUNTU_STUDENTS__ || globalThis.__UBUNTU_STUDENTS__.length <= seedList.length) {
+          globalThis.__UBUNTU_STUDENTS__ = seedList;
+          return [...seedList];
+        }
+      }
+    } catch {}
+  }
+
+  if (globalThis.__UBUNTU_STUDENTS__ && globalThis.__UBUNTU_STUDENTS__.length > 0) {
     return [...globalThis.__UBUNTU_STUDENTS__];
   }
   return [];
@@ -214,12 +237,66 @@ export async function getStudents(): Promise<StudentRecord[]> {
 
 export async function saveStudents(students: StudentRecord[]): Promise<void> {
   globalThis.__UBUNTU_STUDENTS__ = [...students];
+
+  // 1. Birincil depolama dizinine yaz
   try {
     await fs.mkdir(STORAGE_DIR, { recursive: true });
     await fs.writeFile(STUDENTS_FILE, JSON.stringify(students, null, 2), "utf-8");
   } catch (err) {
     console.warn("Storage write fallback to memory:", err);
   }
+
+  // 2. Eğer SEED_STORAGE_DIR farklı ise ve dizin yazılabilir ise oraya da yaz (VPS, Docker, PM2, Local)
+  if (STORAGE_DIR !== SEED_STORAGE_DIR) {
+    try {
+      await fs.mkdir(SEED_STORAGE_DIR, { recursive: true });
+      await fs.writeFile(SEED_STUDENTS_FILE, JSON.stringify(students, null, 2), "utf-8");
+    } catch {
+      // Serverless salt-okunur ortamlarda sessizce atla
+    }
+  }
+}
+
+export async function syncStudents(incomingStudents: StudentRecord[]): Promise<StudentRecord[]> {
+  const currentStudents = await getStudents();
+  const map = new Map<string, StudentRecord>();
+
+  for (const s of currentStudents) {
+    if (s && s.id) {
+      map.set(String(s.id).trim(), { ...s });
+    }
+  }
+
+  let hasChanges = false;
+  for (const inc of incomingStudents) {
+    if (!inc || !inc.id) continue;
+    const key = String(inc.id).trim();
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...inc });
+      hasChanges = true;
+    } else {
+      if (inc.status && inc.status !== existing.status) {
+        existing.status = inc.status;
+        hasChanges = true;
+      }
+      if (inc.studentUsername && inc.studentUsername !== existing.studentUsername) {
+        existing.studentUsername = inc.studentUsername;
+        existing.studentPassword = inc.studentPassword || existing.studentPassword;
+        hasChanges = true;
+      }
+      if (inc.fullName && inc.fullName !== existing.fullName) {
+        existing.fullName = inc.fullName;
+        hasChanges = true;
+      }
+    }
+  }
+
+  const merged = Array.from(map.values());
+  if (hasChanges || merged.length !== currentStudents.length) {
+    await saveStudents(merged);
+  }
+  return merged;
 }
 
 function slugify(text: string): string {

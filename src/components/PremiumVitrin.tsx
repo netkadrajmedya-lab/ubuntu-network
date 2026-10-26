@@ -66,13 +66,42 @@ export default function PremiumVitrin() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/students?status=onaylandı");
+      const res = await fetch(`/api/students?status=onayland%C4%B1&t=${Date.now()}`, { cache: "no-store" });
       const data = await res.json();
-      if (data.success) {
-        setStudents(data.students || []);
+      if (data.success && Array.isArray(data.students) && data.students.length > 0) {
+        setStudents(data.students);
+        try {
+          localStorage.setItem("UBUNTU_STUDENTS_CACHE", JSON.stringify(data.students));
+        } catch (e) {}
+      } else {
+        // Sunucu soğuk başlangıçtaysa tarayıcı önbelleğindeki onaylı öğrencileri yükle
+        try {
+          const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const approved = parsed.filter((s: any) => s.status === "Onaylandı");
+              if (approved.length > 0) {
+                setStudents(approved);
+              }
+            }
+          }
+        } catch (e) {}
       }
     } catch (err) {
       console.error("Vitrin verisi yüklenirken hata:", err);
+      try {
+        const cached = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const approved = parsed.filter((s: any) => s.status === "Onaylandı");
+            if (approved.length > 0) {
+              setStudents(approved);
+            }
+          }
+        }
+      } catch (e) {}
     } finally {
       setLoading(false);
     }
