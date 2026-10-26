@@ -437,6 +437,16 @@ export default function AdminDashboard() {
           }
         }
       } catch (e) {}
+
+      try {
+        const cachedStudents = localStorage.getItem("UBUNTU_STUDENTS_CACHE");
+        if (cachedStudents) {
+          const parsed = JSON.parse(cachedStudents);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setStudents(parsed);
+          }
+        }
+      } catch (e) {}
     } finally {
       setLoading(false);
     }
