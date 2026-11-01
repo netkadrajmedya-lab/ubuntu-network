@@ -106,7 +106,7 @@ export default function HakkimizdaPage() {
         </div>
       </section>
 
-      {/* 3. KURUCUMUZ BÖLÜMÜ (MUHAMMED MANSOUR SAY) */}
+      {/* 3. KURUCUMUZ BÖLÜMÜ (MUHAMMED MANSOUR SEY) */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#111111] text-white relative overflow-hidden border-t border-white/10">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#2E5A27_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
 
@@ -132,7 +132,7 @@ export default function HakkimizdaPage() {
                   {/* Fotoğraf (Önce /founder.jpg denenir, yoksa /founder.png, yoksa zarif portre görseli) */}
                   <img 
                     src="/founder.jpg"
-                    alt="Muhammed Mansour Say"
+                    alt="Muhammed Mansour Sey"
                     onError={(e: any) => {
                       if (e.currentTarget.src.indexOf('/founder.png') === -1 && e.currentTarget.src.indexOf('unsplash') === -1) {
                         e.currentTarget.src = '/founder.png';
